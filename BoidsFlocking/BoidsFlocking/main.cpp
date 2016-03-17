@@ -10,7 +10,7 @@ int main(void)
 	OGLRenderer* renderer = OGLRenderer::Instance();
 	Shader* simpleShader = new Shader(SHADER_DIR"vertex_shader.glsl", SHADER_DIR"frag_shader.glsl");
 	Mesh* triMesh = Mesh::GenerateTriangle();
-	BoidScene* boidScene = new BoidScene(1, simpleShader, triMesh);
+	BoidScene* boidScene = new BoidScene(2000, simpleShader, triMesh);
 	Timer gt;
 
 	renderer->SetCurrentScene(boidScene);

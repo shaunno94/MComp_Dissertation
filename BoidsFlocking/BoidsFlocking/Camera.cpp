@@ -79,14 +79,14 @@ void Camera::pollMouse(float dt)
 	yaw += deltaMove * (half_width - x);
 	glfwSetCursorPos(window, half_width, half_height);
 
-	/*if (yaw < 0.0)
+	if (yaw < 0.0)
 	{
 		yaw += 360.0;
 	}
 	if (yaw > 360.0)
 	{
 		yaw -= 360.0;
-	}*/
+	}
 	pitch = min(pitch, 90.0f);
 	pitch = max(pitch, -90.0f);
 }
