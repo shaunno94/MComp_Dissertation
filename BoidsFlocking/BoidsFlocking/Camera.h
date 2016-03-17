@@ -22,14 +22,16 @@ private:
 	void pollKeyBoard(float dt);
 
 	//camera transform variables
-	double pitch = 0.0;
-	double yaw = 0.0;
-	const float speed = 0.1f;
-	const float mouseSpeed = 0.3f;
+	float pitch = 0.0;
+	float yaw = 0.0;
+	const float speed = 0.005f;
+	const float mouseSpeed = 0.001f;
 
 	glm::vec3 position;
 	glm::vec3 target;
-	glm::quat rotation;
+	glm::vec3 look;
+	glm::vec3 up;
+	glm::vec3 right;
 	//Projection, model and view matrices
 	glm::mat4 Projection;
 	glm::mat4 View;

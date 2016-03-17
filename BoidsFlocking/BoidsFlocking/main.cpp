@@ -19,8 +19,8 @@ int main(void)
 	while (renderer->ShouldClose()) //Check if the ESC key was pressed or the window was closed
 	{
 		gt.startTimer();		
-		glfwPollEvents();
 		renderer->Render(gt.getLast());
+		glfwPollEvents();
 		gt.stopTimer();
 	} 
 

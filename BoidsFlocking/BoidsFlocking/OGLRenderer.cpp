@@ -93,18 +93,14 @@ void OGLRenderer::init_glfw()
 	}
 
 	glfwMakeContextCurrent(window);
-	//glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-	glfwSetInputMode(window, GLFW_CURSOR_DISABLED, GL_TRUE);
+	glfwSetInputMode(window, GLFW_STICKY_KEYS | GLFW_CURSOR_DISABLED, GL_TRUE);
 }
 
 void OGLRenderer::SetCurrentShader(Shader* s)
 {
-	if (currentShader != s)
-	{
-		currentShader = s;
-		glUseProgram(currentShader->GetShaderProgram());
-		UpdateShaderMatrices();
-	}
+	currentShader = s;
+	glUseProgram(currentShader->GetShaderProgram());
+	UpdateShaderMatrices();
 }
 
 void OGLRenderer::Render(float dt)
