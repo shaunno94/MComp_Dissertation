@@ -17,6 +17,7 @@ public:
 
 	//Generates a single triangle, with RGB colours
 	static Mesh* GenerateTriangle();
+	static Mesh* GenerateSphere(uint32_t height, uint32_t width);
 	//Generates a single white quad, going from -1 to 1 on the x and z axis.
 	static Mesh* GenerateQuad(glm::vec2 texCoords = glm::vec2(1.0f, 1.0f));
 	static Mesh* GenerateQuadAlt();

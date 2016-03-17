@@ -24,8 +24,8 @@ private:
 	//camera transform variables
 	float pitch = 0.0;
 	float yaw = 0.0;
-	const float speed = 0.005f;
-	const float mouseSpeed = 0.001f;
+	const float speed = 0.08f;
+	const float mouseSpeed = 0.003f;
 
 	glm::vec3 position;
 	glm::vec3 target;

@@ -12,3 +12,5 @@ enum BUFFERS
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
 
 #define THREADED 1
+
+#define PI acos(-1.0)

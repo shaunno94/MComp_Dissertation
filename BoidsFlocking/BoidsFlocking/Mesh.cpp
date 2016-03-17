@@ -72,6 +72,38 @@ void Mesh::Clean()
 	}
 }
 
+Mesh* Mesh::GenerateSphere(uint32_t height, uint32_t width)
+{
+	Mesh* mesh = new Mesh();
+	mesh->m_NumVertices = height * width;
+	mesh->m_NumIndices = (height * width) * 6;
+	mesh->m_PrimitiveType = GL_TRIANGLE_STRIP;
+	mesh->m_Vertices = new glm::vec3[mesh->m_NumVertices];
+	mesh->m_Indices = new uint32_t[mesh->m_NumIndices];
+
+	//Iterates through angles of phi and theta to produce sphere.
+	for (uint32_t y = 0; y < height; y++)
+	{
+		double phi = (double(y) * PI) / (height - 1);
+		for (uint32_t x = 0; x < width; x++)
+		{
+			double theta = (double(x) * (2 * PI)) / (width - 1);
+			mesh->m_Vertices[(y * x) + x] = glm::normalize(glm::vec3(sin(phi) * cos(theta), cos(phi), sin(phi) * sin(theta)));
+		}
+	}
+	for (uint32_t i = 0; i < height - 1; ++i)
+	{
+		mesh->m_Indices[i] = (i * width);
+		for (uint32_t j = 0; j < width; ++j)
+		{
+			mesh->m_Indices[(i * j) + j + 1] = (i * width + j);
+			mesh->m_Indices[(i * j) + j + 2] = ((i + 1) * width + j);
+		}
+		mesh->m_Indices[i + 2] = ((i + 1) * width + (width - 1));
+	}
+	return mesh;
+}
+
 Mesh* Mesh::GenerateTriangle() 
 {
 	Mesh* mesh = new Mesh();

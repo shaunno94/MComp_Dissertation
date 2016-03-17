@@ -27,6 +27,9 @@ private:
 	std::function<float()> rndY;
 	std::function<float()> rndZ;
 
+	float count = 0.0f;
+	glm::vec3 m_FlockHeading;
+
 #if THREADED
 	std::vector<std::future<void>> futures;
 	const unsigned int NUMBER_OF_THREADS = 8;

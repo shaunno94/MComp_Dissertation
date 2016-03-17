@@ -13,10 +13,11 @@ class Boid : public Entity
 {
 	friend class BoidScene;
 public:
-	Boid(unsigned int maxBoids, glm::vec3 spawnPosition, const std::string& name = std::to_string(id));
+	Boid(unsigned int maxBoids, glm::vec3 spawnPosition, glm::vec3 initialVelocity, const std::string& name = std::to_string(id));
 	virtual ~Boid();
 
 	inline const glm::vec3& GetPosition() const { return m_Position; }
+	inline void UpdateFlockHeading(glm::vec3& heading) { m_Destination = heading; }
 	inline const glm::vec3& GetVelocity() const { return m_Velocity; }
 	inline void AddNeighbour(BoidNeighbour bN) { neighbours[lastPosition++] = bN; }
 
@@ -29,14 +30,15 @@ private:
 	void CalcSeperation();
 	void CalcAlignment();
 	void LimitVelocity();
+	void TendToPlace();
 
-	float m_InvMass;
+	glm::vec3 m_Destination;
+	glm::vec3 m_Heading;
 	glm::vec3 m_Position;
 	glm::vec3 m_Velocity;
-	glm::vec3 m_Force;
-	glm::vec3 m_CohesiveForce;
-	glm::vec3 m_SeperationForce;
-	glm::vec3 m_AlignmentForce;
+	glm::vec3 m_CohesiveVector;
+	glm::vec3 m_SeperationVector;
+	glm::vec3 m_AlignmentVector;
 	std::vector<BoidNeighbour> neighbours;
 
 	static const float MIN_DIST;
