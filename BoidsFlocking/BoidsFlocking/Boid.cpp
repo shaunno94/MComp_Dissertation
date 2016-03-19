@@ -2,8 +2,8 @@
 #include <algorithm> 
 
 const float Boid::MIN_DIST = 6.0f;
-const float Boid::MAX_SPEED = 1.5f;
-const unsigned int Boid::K = 15;
+const float Boid::MAX_SPEED = 0.25f;
+const unsigned int Boid::K = 65;
 
 Boid::Boid(unsigned int maxBoids, glm::vec3 spawnPosition, glm::vec3 initialVelocity, const std::string& name) : Entity(name)
 {
@@ -48,7 +48,7 @@ void Boid::LimitVelocity()
 
 void Boid::TendToPlace()
 {
-	m_Heading = (m_Destination - m_Position) * 0.0001f;
+	m_Heading = (m_Destination - m_Position) * 0.001f;
 }
 
 void Boid::CalculateForce()
@@ -66,35 +66,36 @@ void Boid::CalcCohesion()
 	glm::vec3 avgPos = glm::vec3(0, 0, 0);
 	for (unsigned int i = 0; i < K; ++i)
 	{
-		if (neighbours[i].dist < MIN_DIST)
+		//if (neighbours[i].dist < MIN_DIST)
 		{
 			avgPos += neighbours[i].n->m_Position;
 			counter++;
 		}
 	}
-	if (counter > 0)
+	//if (counter > 0)
 	{
-		avgPos /= float(counter);
+		//avgPos /= float(counter);
+		avgPos /= float(K);
 		m_CohesiveVector = (avgPos - m_Position) /* 0.001f*/;
 
 		float mag = glm::length(m_CohesiveVector);
 		glm::normalize(m_CohesiveVector);
 
-		if (mag < 100.0f)
+		//if (mag < 10.0f)
 		{
-			m_CohesiveVector *= (MAX_SPEED * (mag / 100.0f));
+			m_CohesiveVector *= (MAX_SPEED * (mag * 0.001f));
 		}
-		else
+		/*else
 		{
 			m_CohesiveVector *= MAX_SPEED;
-		}
+		}*/
 
 		m_CohesiveVector -= m_Velocity;
 	}	
-	else
+	/*else
 	{
 		m_CohesiveVector = glm::vec3(0, 0, 0);
-	}
+	}*/
 }
 
 void Boid::CalcSeperation()
@@ -103,17 +104,17 @@ void Boid::CalcSeperation()
 	glm::vec3 seperation = glm::vec3(0, 0, 0);
 	for (unsigned int i = 0; i < K; ++i)
 	{
-		if (neighbours[i].dist < MIN_DIST)
+		//if (neighbours[i].dist < MIN_DIST)
 		{
 			//seperation -= (neighbours[i].n->m_Position - m_Position);
-			seperation -= glm::normalize(neighbours[i].n->m_Position - m_Position) / neighbours[i].dist;
+			seperation -= (neighbours[i].n->m_Position - m_Position) / neighbours[i].dist;
 			counter++;
 		}
 	}
-	if (counter > 0)
-		seperation /= float(counter);
+	//if (counter > 0)
+		seperation /= float(K);
 
-	m_SeperationVector = seperation;
+	m_SeperationVector = seperation * 0.3f;
 }
 
 void Boid::CalcAlignment()
@@ -122,14 +123,14 @@ void Boid::CalcAlignment()
 	glm::vec3 avgVel = glm::vec3(0, 0, 0);
 	for (unsigned int i = 0; i < K; ++i)
 	{
-		if (neighbours[i].dist < 60.0f)
+		//if (neighbours[i].dist < 60.0f)
 		{
 			avgVel += neighbours[i].n->m_Velocity;
 			counter++;
 		}
 	}
-	if (counter > 0)
-		avgVel /= float(counter);
-	//avgVel /= K;
-	m_AlignmentVector = (avgVel - m_Velocity) * 0.9f;
+	//if (counter > 0)
+		//avgVel /= float(counter);
+	avgVel /= K;
+	m_AlignmentVector = (avgVel - m_Velocity) * 0.8f;
 }

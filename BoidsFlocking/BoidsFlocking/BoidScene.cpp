@@ -27,18 +27,16 @@ BoidScene::~BoidScene()
 
 void BoidScene::InitGenerator(int spread)
 {
-	//Random number generator seeds random number engine
 	std::random_device rD0;
 	std::random_device rD1;
 	std::random_device rD2;
-	//Random number engine from std library
 	std::default_random_engine engine0(rD0());
 	std::default_random_engine engine1(rD1());
 	std::default_random_engine engine2(rD2());
 
-	std::uniform_real_distribution<float> x(float(-spread) / 2.0f, float(spread) / 2.0f);
-	std::uniform_real_distribution<float> y(float(-spread) / 2.0f, float(spread) / 2.0f);
-	std::uniform_real_distribution<float> z(float(-spread) / 2.0f, float(spread) / 2.0f);
+	std::uniform_real_distribution<float> x(-100.0f, 100.0f);
+	std::uniform_real_distribution<float> y(-100.0f, 100.0f);
+	std::uniform_real_distribution<float> z(-100.0f, 100.0f);
 
 	rndX = std::bind(x, engine0);
 	rndY = std::bind(y, engine1);
