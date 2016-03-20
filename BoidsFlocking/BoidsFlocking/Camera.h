@@ -1,10 +1,7 @@
 //Author: Shaun Heald
 //This class polls input from the keyboard & mouse, it also sets the model view projection matrix.
 #pragma once
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/transform.hpp>
-#include <glm\gtc\quaternion.hpp>
+#include "Common.h"
 
 struct GLFWwindow;
 

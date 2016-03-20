@@ -1,9 +1,12 @@
+#include "Common.h"
+#if !CUDA
 #include "OGLRenderer.h"
 #include "BoidScene.h"
 #include "Timer.h"
 #include "Common.h"
 #include "Shader.h"
 #include "Mesh.h"
+
 
 int main(void)
 {
@@ -30,3 +33,4 @@ int main(void)
 	delete simpleShader;
 	return 0;
 }
+#endif

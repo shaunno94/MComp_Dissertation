@@ -11,6 +11,8 @@ public:
 	BoidScene(unsigned int numberOfBoids, Shader* shader, Mesh* mesh);
 	virtual ~BoidScene();
 	virtual void UpdateScene(float dt) override;
+	Boid* GetBoid(unsigned int i) { return i < boids.size() ? boids[i] : nullptr; }
+	std::vector<Boid*>& GetBoidData() { return boids; }
 
 protected:
 

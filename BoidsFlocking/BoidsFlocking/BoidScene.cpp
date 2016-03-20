@@ -1,6 +1,5 @@
 #include "BoidScene.h"
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include "Common.h"
 
 
 BoidScene::BoidScene(unsigned int numberOfBoids, Shader* shader, Mesh* mesh)

@@ -13,7 +13,7 @@ Boid::Boid(unsigned int maxBoids, glm::vec3 spawnPosition, glm::vec3 initialVelo
 	m_Destination = glm::vec3(0, 0, 0);
 	neighbours.clear();
 
-	neighbours.resize(maxBoids - 1);
+	//neighbours.resize(maxBoids - 1);
 	maxSize = maxBoids - 1;
 }
 
