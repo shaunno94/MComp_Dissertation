@@ -1,24 +1,23 @@
 #include "BoidGeneratorGPU.h"
 #if CUDA
-
+#include <cuda_runtime.h>
+#include <iostream>
 BoidGeneratorGPU::BoidGeneratorGPU(unsigned int numberOfBoids)
 {
 	InitGenerator(numberOfBoids);
+
+	cudaMallocManaged((void**)&boids, numberOfBoids * sizeof(BoidGPU));
+
 	for (unsigned int i = 0; i < numberOfBoids; ++i)
 	{
-		boids.push_back(BoidGPU(50, glm::vec3(rndX(), rndY(), rndZ()), glm::vec3(rndX(), rndY(), rndZ())));
+		boids[i] = BoidGPU(50, glm::vec3(rndX(), rndY(), rndZ()), glm::vec3(rndX(), rndY(), rndZ()));
 	}
 	m_FlockHeading = glm::vec3(0, 0, 0);
 }
 
 BoidGeneratorGPU::~BoidGeneratorGPU()
 {
-	//for (auto& b : boids)
-	{
-		//delete b;
-		//b = nullptr;
-	}
-	boids.clear();
+	cudaFree(boids);
 }
 
 void BoidGeneratorGPU::InitGenerator(int spread)

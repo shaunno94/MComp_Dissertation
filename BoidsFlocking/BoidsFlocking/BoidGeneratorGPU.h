@@ -11,14 +11,14 @@ class BoidGeneratorGPU
 public:
 	BoidGeneratorGPU(unsigned int numberOfBoids);
 	~BoidGeneratorGPU();
-	std::vector<BoidGPU>& GetBoidData() { return boids; }
+	BoidGPU* GetBoidData() { return boids; }
 
 private:
 	void InitGenerator(int spread);
 
 	//k value
 	const float MAX_DISTANCE = 90.0f;
-	std::vector<BoidGPU> boids;
+	BoidGPU* boids;
 	float count = 0.0f;
 	glm::vec3 m_FlockHeading;
 

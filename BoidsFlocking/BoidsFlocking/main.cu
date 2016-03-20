@@ -11,23 +11,89 @@
 #include <device_launch_parameters.h>
 #include <cuda_gl_interop.h>
 #include <vector_types.h>
+#include <device_functions.h>
 
-const uint32_t NUM_BOIDS = 100000;
-//const uint64_t RESULT_SIZE = (NUM_BOIDS * NUM_BOIDS);
-const uint32_t THREADS = 32;
-const uint32_t BLOCKS = (NUM_BOIDS + (THREADS - 1)) / THREADS;
+const uint32_t NUM_BOIDS = 8192;
+const uint32_t THREADS_K1 = 32;
+const uint32_t THREADS_K2 = 1024;
+const uint32_t BLOCKS_K1 = (NUM_BOIDS + (THREADS_K1 - 1)) / THREADS_K1;
+const uint32_t BLOCKS_K2 = (NUM_BOIDS + (THREADS_K2 - 1)) / THREADS_K2;
+const dim3 THREAD_DIM_K1 = dim3(THREADS_K1, THREADS_K1);
+const dim3 BLOCK_DIM_K1 = dim3(BLOCKS_K1, BLOCKS_K1);
+#define MAX_DIST 90.0f
 
-__global__ void Euclidean_Dist(BoidGPU* a)
+//while (tid < NUM_BOIDS)//tid += blockDim.x * gridDim.x;		//int offset = x + y * blockDim.x * gridDim.x;
+//cudaMalloc((void**)&dev_a, NUM_BOIDS * sizeof(BoidGPU));//cudaMemcpy(dev_a, boidGPU->GetBoidData().data(), NUM_BOIDS * sizeof(BoidGPU), cudaMemcpyHostToDevice);
+
+__global__ void compute_KNN(BoidGPU* boid)
+{	
+	int tid_x = threadIdx.x + blockIdx.x * blockDim.x;
+	int tid_y = threadIdx.y + blockIdx.y * blockDim.y;
+
+	if (glm::distance(boid[tid_x].m_Position, boid[tid_y].m_Position) <= MAX_DIST)
+	{	
+		if (boid[tid_x].lastIndex < 50)
+		{
+			unsigned int index = atomicAdd(&boid[tid_x].lastIndex, 1);
+			boid[tid_x].neighbours[index] = &boid[tid_y];
+		}
+	}	
+}
+
+__device__ void CalcCohesion(BoidGPU& boid, glm::vec3& cohVec)
 {
-	//int tid = threadIdx.x + blockIdx.x * blockDim.x;
-	int x = threadIdx.x + blockIdx.x * blockDim.x;
-	int y = threadIdx.y + blockIdx.y * blockDim.y;
-	int offset = x + y * blockDim.x * gridDim.x;
-	//while (tid < NUM_BOIDS)
+	glm::vec3 avgPos = glm::vec3(0, 0, 0);
+	for (unsigned int i = 0; i < 50; ++i)
 	{
-		glm::distance(a[x].m_Position, a[y].m_Position);
-		//tid += blockDim.x * gridDim.x;
+		avgPos += boid.neighbours[i]->m_Position;
 	}
+
+	avgPos /= 50.0f;
+	cohVec = (avgPos - boid.m_Position) /* 0.001f*/;
+
+	float mag = glm::length(cohVec);
+	glm::normalize(cohVec);
+
+	cohVec *= (0.25f * (mag * 0.001f));
+	cohVec -= boid.m_Velocity;
+}
+
+__device__ void CalcSeperation(BoidGPU& boid, glm::vec3& sepVec)
+{
+	for (unsigned int i = 0; i < 50; ++i)
+	{
+		sepVec -= (boid.neighbours[i]->m_Position - boid.m_Position) / glm::distance(boid.neighbours[i]->m_Position, boid.m_Position);
+	}
+	sepVec /= 50.0f;
+	sepVec *= 0.3f;
+}
+
+__device__ void CalcAlignment(BoidGPU& boid, glm::vec3& alignVec)
+{
+	glm::vec3 avgVel = glm::vec3(0, 0, 0);
+	for (unsigned int i = 0; i < 50; ++i)
+	{
+		avgVel += boid.neighbours[i]->m_Velocity;
+	}
+	avgVel /= 50.0f;
+	alignVec = (avgVel - boid.m_Velocity) * 0.8f;
+}
+
+__global__ void updateBoids(BoidGPU* boid, float dt)
+{
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	
+	glm::vec3 cohVec(0, 0, 0);
+	glm::vec3 sepVec(0, 0, 0);
+	glm::vec3 alignVec(0, 0, 0);
+	CalcCohesion(boid[tid], cohVec);
+	CalcSeperation(boid[tid], sepVec);
+	CalcAlignment(boid[tid], alignVec);
+
+	boid[tid].m_Velocity = cohVec + sepVec + alignVec;
+	boid[tid].m_Position += (boid[tid].m_Velocity * dt);
+	boid[tid].m_WorldTransform = glm::translate(glm::mat4(1.0f), boid[tid].m_Position);
+	boid[tid].lastIndex = 0;
 }
 
 int main(void)
@@ -35,46 +101,39 @@ int main(void)
 	OGLRenderer* renderer = OGLRenderer::Instance();
 	Shader* simpleShader = new Shader(SHADER_DIR"vertex_shader.glsl", SHADER_DIR"frag_shader.glsl");
 	Mesh* triMesh = Mesh::GenerateTriangle();
-	BoidGeneratorGPU* boidGPU = new BoidGeneratorGPU(NUM_BOIDS);
-	Timer gt;
 	cudaSetDevice(0);
-	//float* result = new float[RESULT_SIZE];
-	BoidGPU* dev_a;
-	//float* dev_result;
-	
-	cudaMalloc((void**)&dev_a, NUM_BOIDS * sizeof(BoidGPU));
-	//cudaMalloc((void**)&dev_result, RESULT_SIZE * sizeof(float));
+	BoidGeneratorGPU boidGPU(NUM_BOIDS);
+	Timer gt;
 
-	cudaMemcpy(dev_a, boidGPU->GetBoidData().data(), NUM_BOIDS * sizeof(BoidGPU), cudaMemcpyHostToDevice);
+	/*compute_KNN << <BLOCK_DIM_K1, THREAD_DIM_K1 >> >(boidGPU.GetBoidData());
+	cudaDeviceSynchronize();
+	std::cout << cudaGetErrorString(cudaGetLastError()) << std::endl;
 
-	dim3 threads(THREADS, THREADS);
-	dim3 blocks(BLOCKS, BLOCKS);
-	//Euclidean_Dist << <blocks, threads >> >(dev_a);
+	updateBoids << <BLOCKS_K2, THREADS_K2 >> >(boidGPU.GetBoidData(), 16.0f);
+	cudaDeviceSynchronize();
+	std::cout << cudaGetErrorString(cudaGetLastError()) << std::endl;
 
-	//cudaMemcpy(result, dev_result, RESULT_SIZE * sizeof(float), cudaMemcpyDeviceToHost);
-
-	//for (unsigned int i = 0; i < NUM_BOIDS * NUM_BOIDS; ++i)
-	//{
-		//std::cout << result[1] << std::endl;
-	//}
+	for (unsigned int i = 0; i < NUM_BOIDS; ++i)
+	{
+		std::cout << boidGPU.GetBoidData()[i].lastIndex << std::endl;
+	}*/
 
 	//Main loop.
 	while (renderer->ShouldClose()) //Check if the ESC key was pressed or the window was closed
 	{
-		Euclidean_Dist << <blocks, threads >> >(dev_a);
 		gt.startTimer();
+		compute_KNN << <BLOCK_DIM_K1, THREAD_DIM_K1 >> >(boidGPU.GetBoidData());
+		updateBoids << <BLOCKS_K2, THREADS_K2 >> >(boidGPU.GetBoidData(), 16.0f);
+		
 		renderer->Render(gt.getLast());
 		glfwPollEvents();
 		gt.stopTimer();
 	}
 
 	OGLRenderer::Release();
-	delete boidGPU;
 	delete triMesh;
 	delete simpleShader;
 	cudaDeviceReset();
-	cudaFree(dev_a);
-	//cudaFree(dev_result);
 	return 0;
 }
 #endif
