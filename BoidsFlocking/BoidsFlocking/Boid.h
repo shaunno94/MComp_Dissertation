@@ -33,12 +33,14 @@ private:
 	void TendToPlace();
 
 	glm::vec3 m_Destination;
+	glm::vec3 m_OldPosition;
 	glm::vec3 m_Heading;
 	glm::vec3 m_Position;
 	glm::vec3 m_Velocity;
 	glm::vec3 m_CohesiveVector;
 	glm::vec3 m_SeperationVector;
 	glm::vec3 m_AlignmentVector;
+	const float m_DampingFactor = 0.999f;
 	std::vector<BoidNeighbour> neighbours;
 
 	static const float MIN_DIST;

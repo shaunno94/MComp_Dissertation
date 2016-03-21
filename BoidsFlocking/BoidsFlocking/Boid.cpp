@@ -23,11 +23,10 @@ void Boid::OnUpdateObject(float dt)
 {
 	CalculateForce();
 
-	//m_Velocity = m_Velocity + (accel * dt);
-	LimitVelocity();
+	m_OldPosition = m_Position;
 	m_Position += (m_Velocity * dt);
-
-	m_WorldTransform = glm::translate(glm::mat4(1.0f), m_Position);
+	
+	m_WorldTransform = glm::translate(glm::mat4(1.0f), m_OldPosition + m_Position);
 	m_WorldTransform = m_WorldTransform * m_LocalTransform;
 	neighbours.clear();
 }
@@ -39,6 +38,7 @@ void Boid::LimitVelocity()
 	{
 		m_Velocity = (m_Velocity / speed) * MAX_SPEED;
 	}
+	m_Velocity *= m_DampingFactor;
 }
 
 void Boid::TendToPlace()
@@ -52,7 +52,8 @@ void Boid::CalculateForce()
 	CalcSeperation();
 	CalcAlignment();
 	TendToPlace();
-	m_Velocity = m_SeperationVector + m_CohesiveVector + m_AlignmentVector + m_Heading;
+	m_Velocity = (m_SeperationVector + m_CohesiveVector + m_AlignmentVector + m_Heading);
+	LimitVelocity();
 }
 
 void Boid::CalcCohesion()
@@ -67,16 +68,7 @@ void Boid::CalcCohesion()
 
 	float mag = glm::length(m_CohesiveVector);
 	glm::normalize(m_CohesiveVector);
-
-	//if (mag < 10.0f)
-	{
-		m_CohesiveVector *= (MAX_SPEED * (mag * 0.001f));
-	}
-	/*else
-	{
-	m_CohesiveVector *= MAX_SPEED;
-	}*/
-
+	m_CohesiveVector *= (MAX_SPEED * (mag * 0.001f));
 	m_CohesiveVector -= m_Velocity;
 }
 

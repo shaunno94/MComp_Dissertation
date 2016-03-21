@@ -8,7 +8,7 @@
 #include <glm\gtc\quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#define CUDA 0
+#define CUDA 1
 #if CUDA
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -27,6 +27,6 @@ enum BUFFERS
 #define max(a,b)    (((a) > (b)) ? (a) : (b))
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
 
-#define THREADED 1
+#define THREADED 0
 
 #define PI acos(-1.0)
