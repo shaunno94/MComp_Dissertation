@@ -1,7 +1,6 @@
 #pragma once
 #include "Common.h"
 #if CUDA
-#include <cuda_runtime.h>
 struct BoidGPU
 {
 	BoidGPU** neighbours;

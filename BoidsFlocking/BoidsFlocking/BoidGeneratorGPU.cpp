@@ -1,6 +1,5 @@
 #include "BoidGeneratorGPU.h"
 #if CUDA
-#include <cuda_runtime.h>
 #include <iostream>
 BoidGeneratorGPU::BoidGeneratorGPU(unsigned int numberOfBoids)
 {

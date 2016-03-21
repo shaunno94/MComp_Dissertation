@@ -1,6 +1,8 @@
 #include "Mesh.h"
 #include <GL/glew.h>
-
+//#if CUDA
+//#include <cuda_gl_interop.h>
+//#endif
 Mesh::Mesh(void)
 {
 	m_NumVertices = 0;
@@ -41,6 +43,9 @@ Mesh::Mesh(uint32_t numVertices, glm::vec3* vertices, glm::vec2* texCoords, glm:
 Mesh::~Mesh(void)
 {
 	Clean();
+//#if CUDA
+//	cudaGraphicsUnregisterResource(cudaVBO);
+//#endif
 }
 
 void Mesh::Clean()
@@ -372,6 +377,11 @@ void Mesh::BufferData()
 		child->BufferData();
 
 	glBindVertexArray(0);
+
+//#if CUDA
+//	cudaGraphicsGLRegisterBuffer(&cudaVBO, bufferObject[VERTEX_BUFFER], cudaGraphicsMapFlagsNone);
+//	cudaGraphicsGLRegisterBuffer(&cudaVBO, bufferObject[INDEX_BUFFER], cudaGraphicsMapFlagsNone);
+//#endif
 }
 
 void Mesh::Draw()

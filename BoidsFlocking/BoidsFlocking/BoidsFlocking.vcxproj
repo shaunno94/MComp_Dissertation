@@ -163,7 +163,6 @@
   <ItemGroup>
     <ClCompile Include="Boid.cpp" />
     <ClCompile Include="BoidGeneratorGPU.cpp" />
-    <ClCompile Include="BoidScene.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="main.cpp" />
@@ -190,6 +189,7 @@
     <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="BoidScene.cu" />
     <CudaCompile Include="main.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -8,6 +8,15 @@
 #include <glm\gtc\quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#define CUDA 0
+#if CUDA
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <device_launch_parameters.h>
+#include <vector_types.h>
+#include <device_functions.h>
+#endif
+
 enum BUFFERS
 {
 	VERTEX_BUFFER, INDEX_BUFFER, MAX_BUFFER
@@ -19,6 +28,5 @@ enum BUFFERS
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
 
 #define THREADED 1
-#define CUDA 1
 
 #define PI acos(-1.0)

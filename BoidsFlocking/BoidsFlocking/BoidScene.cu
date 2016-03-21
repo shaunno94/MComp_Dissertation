@@ -6,7 +6,7 @@ BoidScene::BoidScene(unsigned int numberOfBoids, Shader* shader, Mesh* mesh)
 	InitGenerator(numberOfBoids);
 
 #if CUDA
-	cudaMallocManaged((void**)&boids, numberOfBoids * sizeof(BoidGPU));
+	cudaMallocManaged((void**)&boidsGPU, numberOfBoids * sizeof(BoidGPU));
 	BLOCKS_PER_GRID = (numberOfBoids + (THREADS_PER_BLOCK - 1)) / THREADS_PER_BLOCK;
 #endif
 
@@ -16,9 +16,7 @@ BoidScene::BoidScene(unsigned int numberOfBoids, Shader* shader, Mesh* mesh)
 		pos = glm::vec3(rndX(), rndY(), rndZ());
 		vel = glm::vec3(rndX(), rndY(), rndZ());
 		Boid* b = new Boid(0, pos, vel);
-		RenderComponent* rc = new RenderComponent(mesh, shader);
-		b->SetRenderComponent(rc);
-		AddEntity(b);
+		b->SetRenderComponent(new RenderComponent(mesh, shader));
 		boids.push_back(b);
 
 #if CUDA
@@ -29,6 +27,7 @@ BoidScene::BoidScene(unsigned int numberOfBoids, Shader* shader, Mesh* mesh)
 #if THREADED
 	futures.clear();
 #endif
+	maxBoids = numberOfBoids;
 }
 
 BoidScene::~BoidScene()
@@ -52,6 +51,14 @@ void BoidScene::InitGenerator(int spread)
 	rndX = std::bind(x, engine0);
 	rndY = std::bind(y, engine1);
 	rndZ = std::bind(z, engine2);
+}
+
+void BoidScene::RenderScene()
+{
+	Scene::RenderScene();
+	for (unsigned int i = 0; i < boids.size(); ++i)
+		boids[i]->OnRenderObject();
+
 }
 
 #if !CUDA
@@ -96,7 +103,7 @@ void BoidScene::UpdatePartition(size_t begin, size_t end, float dt)
 			{
 				posB = boids[j]->GetPosition();
 				float dist = glm::length(posA - posB);
-				//if (dist <= MAX_DISTANCE)
+				if (dist <= MAX_DISTANCE)
 				{
 					BoidNeighbour bNA;
 					bNA.n = boids[j];
@@ -140,7 +147,7 @@ void BoidScene::UpdateScene(float dt)
 				boids[j]->AddNeighbour(bNB);
 			}
 		}
-	}	
+	}
 
 	for (unsigned int i = 0; i < boids.size(); ++i)
 		boids[i]->OnUpdateObject(dt);
@@ -151,8 +158,13 @@ void BoidScene::UpdateScene(float dt)
 #else
 void BoidScene::UpdateScene(float dt)
 {
-	compute_KNN << <BLOCKS_K2, THREADS_K2 >> >(boidGPU.GetBoidData(), maxBoids, MAX_DISTANCE);
-	updateBoids << <BLOCKS_K2, THREADS_K2 >> >(boidGPU.GetBoidData(), dt, maxBoids);
+	compute_KNN << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boidsGPU, maxBoids, MAX_DISTANCE);
+	updateBoids << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boidsGPU, dt, maxBoids);
+	
+	for (unsigned int i = 0; i < maxBoids; ++i)
+	{
+		//boids[i]->SetWorldTransform(boidsGPU[i].m_WorldTransform);
+	}
 	Scene::UpdateScene(dt);
 }
 
@@ -173,7 +185,7 @@ __global__ void compute_KNN(BoidGPU* boid, const uint32_t maxBoids, const float 
 		{
 			if (counter < 50)
 			{
-				temp.neighbours[counter] = &boid[i];
+				//temp.neighbours[counter] = &boid[i];
 				counter++;
 			}
 			else

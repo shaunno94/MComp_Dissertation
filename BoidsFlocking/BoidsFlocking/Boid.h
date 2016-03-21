@@ -19,7 +19,7 @@ public:
 	inline const glm::vec3& GetPosition() const { return m_Position; }
 	inline void UpdateFlockHeading(glm::vec3& heading) { m_Destination = heading; }
 	inline const glm::vec3& GetVelocity() const { return m_Velocity; }
-	inline void AddNeighbour(BoidNeighbour bN) { neighbours[lastPosition++] = bN; }
+	inline void AddNeighbour(BoidNeighbour bN) { neighbours.push_back(bN); }
 
 protected:
 	virtual void OnUpdateObject(float dt) override;
@@ -44,9 +44,6 @@ private:
 	static const float MIN_DIST;
 	static const float MAX_SPEED;
 	static const unsigned int K;
-
-	unsigned int lastPosition = 0;
-	unsigned int maxSize;
 	
 	struct compare
 	{

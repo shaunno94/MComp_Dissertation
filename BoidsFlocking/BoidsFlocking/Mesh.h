@@ -62,4 +62,9 @@ protected:
 	unsigned int arrayObject;
 	//VBOs for this mesh
 	unsigned int bufferObject[MAX_BUFFER];
+
+#if CUDA
+	cudaGraphicsResource* cudaVBO;
+
+#endif
 };
