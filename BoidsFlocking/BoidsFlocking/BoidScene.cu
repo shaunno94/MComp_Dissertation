@@ -1,13 +1,16 @@
 #include "BoidScene.h"
 #include "Common.h"
+#include <iostream>
 
 BoidScene::BoidScene(unsigned int numberOfBoids, Shader* shader, Mesh* mesh)
 {
 	InitGenerator(numberOfBoids);
 
 #if CUDA
+	cudaSetDevice(0);
 	cudaMallocManaged((void**)&boidsGPU, numberOfBoids * sizeof(BoidGPU));
 	BLOCKS_PER_GRID = (numberOfBoids + (THREADS_PER_BLOCK - 1)) / THREADS_PER_BLOCK;
+#define MAX_NEIGHBOURS 1024
 #endif
 
 	glm::vec3 pos, vel;
@@ -15,12 +18,13 @@ BoidScene::BoidScene(unsigned int numberOfBoids, Shader* shader, Mesh* mesh)
 	{
 		pos = glm::vec3(rndX(), rndY(), rndZ());
 		vel = glm::vec3(rndX(), rndY(), rndZ());
-		Boid* b = new Boid(0, pos, vel);
+		Boid* b = new Boid(pos, vel);
 		b->SetRenderComponent(new RenderComponent(mesh, shader));
 		boids.push_back(b);
 
 #if CUDA
-		boidsGPU[i] = BoidGPU(50, pos, vel);
+		boidsGPU[i] = BoidGPU(numberOfBoids, pos, vel);
+//	std::cout << cudaGetErrorString(cudaGetLastError()) << std::endl;
 #endif
 	}
 	m_FlockHeading = glm::vec3(0, 0, 0);
@@ -158,20 +162,25 @@ void BoidScene::UpdateScene(float dt)
 #else
 void BoidScene::UpdateScene(float dt)
 {
-	compute_KNN << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boidsGPU, maxBoids, MAX_DISTANCE);
-	updateBoids << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boidsGPU, dt, maxBoids);
-	
+	count += dt;
+	if (count > 2500.0f)
+	{
+		m_FlockHeading = glm::vec3(rndX(), rndY(), rndZ());
+		count = 0.0f;
+	}
+	compute_KNN << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boidsGPU, maxBoids, MAX_DISTANCE, dt, m_FlockHeading);
+	cudaDeviceSynchronize();
+
 	for (unsigned int i = 0; i < maxBoids; ++i)
 	{
-		//boids[i]->SetWorldTransform(boidsGPU[i].m_WorldTransform);
+		boids[i]->SetWorldTransform(boidsGPU[i].m_WorldTransform);
 	}
 	Scene::UpdateScene(dt);
 }
 
-__global__ void compute_KNN(BoidGPU* boid, const uint32_t maxBoids, const float MAX_DISTANCE)
+__global__ void compute_KNN(BoidGPU* boid, const uint32_t maxBoids, const float MAX_DISTANCE, float dt, glm::vec3 heading)
 {
-	int tid_x = threadIdx.x + blockIdx.x * blockDim.x;
-
+	int tid_x = threadIdx.x + (blockIdx.x * blockDim.x);
 	if (tid_x >= maxBoids)
 		return;
 
@@ -183,18 +192,19 @@ __global__ void compute_KNN(BoidGPU* boid, const uint32_t maxBoids, const float 
 	{
 		if (glm::distance(temp.m_Position, boid[i].m_Position) <= MAX_DISTANCE)
 		{
-			if (counter < 50)
+			if (counter < MAX_NEIGHBOURS)
 			{
-				//temp.neighbours[counter] = &boid[i];
-				counter++;
+				temp.neighbours[counter++] = &boid[i];
 			}
 			else
 			{
 				temp.lastIndex = counter;
-				return;
+				break;
 			}
 		}
-	}
+	}		
+	//temp.lastIndex = counter;
+	updateBoid(temp, dt, maxBoids, heading);
 }
 
 __device__ void CalcCohesion(BoidGPU& boid, glm::vec3& cohVec)
@@ -205,13 +215,13 @@ __device__ void CalcCohesion(BoidGPU& boid, glm::vec3& cohVec)
 		avgPos += boid.neighbours[i]->m_Position;
 	}
 
-	avgPos /= 50.0f;
-	cohVec = (avgPos - boid.m_Position) /* 0.001f*/;
+	avgPos /= float(boid.lastIndex - 1);
+	cohVec = (avgPos - boid.m_Position);
 
 	float mag = glm::length(cohVec);
 	glm::normalize(cohVec);
 
-	cohVec *= (0.25f * (mag * 0.001f));
+	cohVec *= (0.3f * (mag * 0.001f));
 	cohVec -= boid.m_Velocity;
 }
 
@@ -219,10 +229,12 @@ __device__ void CalcSeperation(BoidGPU& boid, glm::vec3& sepVec)
 {
 	for (unsigned int i = 0; i < boid.lastIndex; ++i)
 	{
-		sepVec -= (boid.neighbours[i]->m_Position - boid.m_Position) / glm::distance(boid.neighbours[i]->m_Position, boid.m_Position);
+		glm::vec3 dir = boid.neighbours[i]->m_Position - boid.m_Position;
+		float len = sqrtf(glm::dot(dir, dir));
+		sepVec -= (dir / len);
 	}
-	sepVec /= 50.0f;
-	sepVec *= 0.3f;
+	sepVec /= float(boid.lastIndex - 1);
+	sepVec *= 0.25f;
 }
 
 __device__ void CalcAlignment(BoidGPU& boid, glm::vec3& alignVec)
@@ -232,27 +244,33 @@ __device__ void CalcAlignment(BoidGPU& boid, glm::vec3& alignVec)
 	{
 		avgVel += boid.neighbours[i]->m_Velocity;
 	}
-	avgVel /= 50.0f;
-	alignVec = (avgVel - boid.m_Velocity) * 0.8f;
+	avgVel /= float(boid.lastIndex - 1);
+	alignVec = (avgVel - boid.m_Velocity);
 }
 
-__global__ void updateBoids(BoidGPU* boid, float dt, const uint32_t maxBoids)
+__device__ void LimitVelocity(BoidGPU& boid)
 {
-	int tid = threadIdx.x + blockIdx.x * blockDim.x;
-	if (tid >= maxBoids)
-		return;
+	float speed = sqrtf(glm::dot(boid.m_Velocity, boid.m_Velocity));
+	if (speed > 0.3f)
+	{
+		boid.m_Velocity = (boid.m_Velocity / speed);
+	}
+	boid.m_Velocity *= 0.999f;
+}
 
-	BoidGPU& temp = boid[tid];
+__device__ void updateBoid(BoidGPU& boid, float dt, const uint32_t maxBoids, glm::vec3& heading)
+{
 	glm::vec3 cohVec(0, 0, 0);
 	glm::vec3 sepVec(0, 0, 0);
 	glm::vec3 alignVec(0, 0, 0);
-	CalcCohesion(temp, cohVec);
-	CalcSeperation(temp, sepVec);
-	CalcAlignment(temp, alignVec);
+	CalcCohesion(boid, cohVec);
+	CalcSeperation(boid, sepVec);
+	CalcAlignment(boid, alignVec);
 
-	temp.m_Velocity = cohVec + sepVec + alignVec;
-	temp.m_Position += (temp.m_Velocity * dt);
-	temp.m_WorldTransform = glm::translate(glm::mat4(1.0f), temp.m_Position);
-	temp.lastIndex = 0;
+	boid.m_Velocity = cohVec + sepVec + alignVec + ((heading - boid.m_Position) * 0.001f);
+	LimitVelocity(boid);
+	boid.m_OldPosition = boid.m_Position;
+	boid.m_Position += (boid.m_Velocity * dt);
+	boid.m_WorldTransform = glm::translate(glm::mat4(1.0f), boid.m_OldPosition + boid.m_Position);
 }
 #endif

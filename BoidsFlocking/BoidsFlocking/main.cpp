@@ -1,5 +1,4 @@
 #include "Common.h"
-#if !CUDA
 #include "OGLRenderer.h"
 #include "BoidScene.h"
 #include "Timer.h"
@@ -7,13 +6,18 @@
 #include "Shader.h"
 #include "Mesh.h"
 
+#if CUDA
+const uint32_t NUM_BOIDS = 2048;
+#else
+const uint32_t NUM_BOIDS = 5000;
+#endif
 
 int main(void)
 {
 	OGLRenderer* renderer = OGLRenderer::Instance();
 	Shader* simpleShader = new Shader(SHADER_DIR"vertex_shader.glsl", SHADER_DIR"frag_shader.glsl");
 	Mesh* triMesh = Mesh::GenerateTriangle();
-	BoidScene* boidScene = new BoidScene(2000, simpleShader, triMesh);
+	BoidScene* boidScene = new BoidScene(NUM_BOIDS, simpleShader, triMesh);
 	Timer gt;
 
 	renderer->SetCurrentScene(boidScene);
@@ -33,4 +37,3 @@ int main(void)
 	delete simpleShader;
 	return 0;
 }
-#endif

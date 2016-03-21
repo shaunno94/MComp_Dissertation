@@ -91,9 +91,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="main.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
     <CudaCompile Include="BoidScene.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>

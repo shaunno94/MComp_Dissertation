@@ -13,7 +13,7 @@ class Boid : public Entity
 {
 	friend class BoidScene;
 public:
-	Boid(unsigned int maxBoids, glm::vec3 spawnPosition, glm::vec3 initialVelocity, const std::string& name = std::to_string(id));
+	Boid(glm::vec3 spawnPosition, glm::vec3 initialVelocity, const std::string& name = std::to_string(id));
 	virtual ~Boid();
 
 	inline const glm::vec3& GetPosition() const { return m_Position; }
@@ -43,9 +43,7 @@ private:
 	const float m_DampingFactor = 0.999f;
 	std::vector<BoidNeighbour> neighbours;
 
-	static const float MIN_DIST;
 	static const float MAX_SPEED;
-	static const unsigned int K;
 	
 	struct compare
 	{

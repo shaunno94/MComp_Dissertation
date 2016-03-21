@@ -23,7 +23,7 @@ public:
 
 	inline void SetRenderComponent(RenderComponent* comp) { m_RenderComponent = comp; m_RenderComponent->SetParent(this); }
 	inline RenderComponent* GetRenderComponent() const { return m_RenderComponent; }
-
+glm::mat4 m_WorldTransform;
 protected:
 	virtual void OnRenderObject();			//Handles OpenGL calls to Render the object
 	virtual void OnUpdateObject(float dt);	//Override to handle things like AI etc on update loop
@@ -34,7 +34,7 @@ protected:
 
 	RenderComponent* m_RenderComponent;
 
-	glm::mat4 m_WorldTransform;
+	
 	glm::mat4 m_LocalTransform;
 
 	float m_CamDist; //For ordering of rendering lists.

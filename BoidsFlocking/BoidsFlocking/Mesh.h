@@ -65,6 +65,5 @@ protected:
 
 #if CUDA
 	cudaGraphicsResource* cudaVBO;
-
 #endif
 };

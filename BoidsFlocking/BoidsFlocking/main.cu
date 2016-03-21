@@ -13,8 +13,7 @@ const uint32_t THREADS_K2 = 1024;
 const uint32_t BLOCKS_K1 = (NUM_BOIDS + (THREADS_K1 - 1)) / THREADS_K1;
 const uint32_t BLOCKS_K2 = (NUM_BOIDS + (THREADS_K2 - 1)) / THREADS_K2;
 const dim3 THREAD_DIM_K1 = dim3(THREADS_K1, THREADS_K1);
-const dim3 BLOCK_DIM_K1 = dim3(BLOCKS_K1, BLOCKS_K1);
-#define MAX_DIST 90.0f*/
+const dim3 BLOCK_DIM_K1 = dim3(BLOCKS_K1, BLOCKS_K1);*/
 
 //while (tid < NUM_BOIDS)//tid += blockDim.x * gridDim.x;		//int offset = x + y * blockDim.x * gridDim.x;
 //cudaMalloc((void**)&dev_a, NUM_BOIDS * sizeof(BoidGPU));//cudaMemcpy(dev_a, boidGPU->GetBoidData().data(), NUM_BOIDS * sizeof(BoidGPU), cudaMemcpyHostToDevice);

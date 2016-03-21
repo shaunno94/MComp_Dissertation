@@ -39,7 +39,7 @@ private:
 
 #if CUDA
 	BoidGPU* boidsGPU;
-	const uint32_t THREADS_PER_BLOCK = 1024;
+	const uint32_t THREADS_PER_BLOCK = 256;
 	uint32_t BLOCKS_PER_GRID;
 #endif
 #if THREADED
@@ -49,9 +49,10 @@ private:
 #endif
 };	
 #if CUDA
-__global__ void compute_KNN(BoidGPU* boid, const uint32_t maxBoids, const float MAX_DISTANCE);
+__global__ void compute_KNN(BoidGPU* boid, const uint32_t maxBoids, const float MAX_DISTANCE, float dt, glm::vec3 heading);
 __device__ void CalcCohesion(BoidGPU& boid, glm::vec3& cohVec);
 __device__ void CalcSeperation(BoidGPU& boid, glm::vec3& sepVec);
 __device__ void CalcAlignment(BoidGPU& boid, glm::vec3& alignVec);
-__global__ void updateBoids(BoidGPU* boid, float dt, const uint32_t maxBoids);
+__device__ void LimitVelocity(BoidGPU& boid);
+__device__ void updateBoid(BoidGPU& boid, float dt, const uint32_t maxBoids, glm::vec3& heading);
 #endif

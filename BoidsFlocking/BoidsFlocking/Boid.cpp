@@ -1,11 +1,9 @@
 #include "Boid.h"
 #include <algorithm> 
 
-const float Boid::MIN_DIST = 6.0f;
 const float Boid::MAX_SPEED = 0.3f;
-const unsigned int Boid::K = 65;
 
-Boid::Boid(unsigned int maxBoids, glm::vec3 spawnPosition, glm::vec3 initialVelocity, const std::string& name) : Entity(name)
+Boid::Boid(glm::vec3 spawnPosition, glm::vec3 initialVelocity, const std::string& name) : Entity(name)
 {
 	m_Position = spawnPosition;
 	m_Velocity = initialVelocity;
