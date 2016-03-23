@@ -26,6 +26,7 @@ void Boid::OnUpdateObject(float dt)
 	
 	m_WorldTransform = glm::translate(glm::mat4(1.0f), m_OldPosition + m_Position);
 	m_WorldTransform = m_WorldTransform * m_LocalTransform;
+	m_WorldTransformPtr = &m_WorldTransform;
 	neighbours.clear();
 }
 

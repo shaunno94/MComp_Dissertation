@@ -6,12 +6,6 @@
 #include "Shader.h"
 #include "Mesh.h"
 
-#if CUDA
-const uint32_t NUM_BOIDS = 2048;
-#else
-const uint32_t NUM_BOIDS = 5000;
-#endif
-
 int main(void)
 {
 	OGLRenderer* renderer = OGLRenderer::Instance();
@@ -32,8 +26,8 @@ int main(void)
 	} 
 
 	OGLRenderer::Release();
-	delete boidScene;
 	delete triMesh;
-	delete simpleShader;
+	delete simpleShader;	
+	delete boidScene;
 	return 0;
 }

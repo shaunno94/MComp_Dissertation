@@ -25,8 +25,6 @@ private:
 	BoidScene() {}
 	void InitGenerator(int spread);
 
-	//k value
-	const float MAX_DISTANCE = 65.0f;
 	std::vector<Boid*> boids;
 
 	std::function<float()> rndX;
@@ -35,11 +33,11 @@ private:
 
 	float count = 0.0f;
 	glm::vec3 m_FlockHeading;
-	unsigned int maxBoids;
 
 #if CUDA
-	BoidGPU* boidsGPU;
-	const uint32_t THREADS_PER_BLOCK = 256;
+	BoidGPU* boids_host;
+	BoidGPU* boids_dev;
+	glm::mat4* modelMatrices_hostPinned;
 	uint32_t BLOCKS_PER_GRID;
 #endif
 #if THREADED
@@ -49,10 +47,10 @@ private:
 #endif
 };	
 #if CUDA
-__global__ void compute_KNN(BoidGPU* boid, const uint32_t maxBoids, const float MAX_DISTANCE, float dt, glm::vec3 heading);
-__device__ void CalcCohesion(BoidGPU& boid, glm::vec3& cohVec);
-__device__ void CalcSeperation(BoidGPU& boid, glm::vec3& sepVec);
-__device__ void CalcAlignment(BoidGPU& boid, glm::vec3& alignVec);
-__device__ void LimitVelocity(BoidGPU& boid);
-__device__ void updateBoid(BoidGPU& boid, float dt, const uint32_t maxBoids, glm::vec3& heading);
+__global__ void ComputeKNN(BoidGPU* boid);
+//__global__ void CalcVelocity(BoidGPU* boid, const glm::vec3 heading);
+__global__ void CalcCohesion(BoidGPU* boid);
+__global__ void CalcSeperation(BoidGPU* boid);
+__global__ void CalcAlignment(BoidGPU* boid);
+__global__ void UpdateBoid(BoidGPU* boid, glm::mat4* boidMat, const float dt, const glm::vec3 heading);
 #endif

@@ -64,6 +64,8 @@ void Entity::OnUpdateObject(float dt)
 	if (m_Parent)
 		m_WorldTransform = m_Parent->m_WorldTransform * m_WorldTransform;
 
+	m_WorldTransformPtr = &m_WorldTransform;
+
 	for (auto child : m_Children)
 	{
 		child->OnUpdateObject(dt);

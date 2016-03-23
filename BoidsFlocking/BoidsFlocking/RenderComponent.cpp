@@ -24,6 +24,6 @@ void RenderComponent::SetParent(Entity* e)
 void RenderComponent::Draw()
 {
 	OGLRenderer::Instance()->SetCurrentShader(m_Shader);
-	glUniformMatrix4fv(m_Shader->GetModelMatrixLoc(), 1, GL_FALSE, glm::value_ptr(m_Entity->GetWorldTransform()));
+	glUniformMatrix4fv(m_Shader->GetModelMatrixLoc(), 1, GL_FALSE, (float*)m_Entity->GetWorldTransform());
 	m_Mesh->Draw();
 }

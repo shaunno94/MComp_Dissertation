@@ -1,8 +1,8 @@
 #include "Mesh.h"
 #include <GL/glew.h>
-#if CUDA
-#include <cuda_gl_interop.h>
-#endif
+//#if CUDA
+//#include <cuda_gl_interop.h>
+//#endif
 Mesh::Mesh(void)
 {
 	m_NumVertices = 0;
@@ -43,9 +43,9 @@ Mesh::Mesh(uint32_t numVertices, glm::vec3* vertices, glm::vec2* texCoords, glm:
 Mesh::~Mesh(void)
 {
 	Clean();
-#if CUDA
-	cudaGraphicsUnregisterResource(cudaVBO);
-#endif
+//#if CUDA
+	//cudaGraphicsUnregisterResource(cudaVBO);
+//#endif
 }
 
 void Mesh::Clean()
@@ -199,7 +199,7 @@ Mesh* Mesh::GenerateQuadAlt()
 	m->m_TextureCoords[2] = glm::vec2(1.0f, 0.0f);
 	m->m_TextureCoords[3] = glm::vec2(1.0f, 1.0f);
 
-	for (int i = 0; i < m->m_NumIndices; ++i)
+	for (unsigned int i = 0; i < m->m_NumIndices; ++i)
 	{
 		m->m_Normals[i] = glm::vec3(0.0f, 0.0f, -1.0f);
 		m->m_Tangents[i] = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -378,10 +378,10 @@ void Mesh::BufferData()
 
 	glBindVertexArray(0);
 
-#if CUDA
-	cudaGraphicsGLRegisterBuffer(&cudaVBO, bufferObject[VERTEX_BUFFER], cudaGraphicsMapFlagsNone);
-	cudaGraphicsGLRegisterBuffer(&cudaVBO, bufferObject[INDEX_BUFFER], cudaGraphicsMapFlagsNone);
-#endif
+//#if CUDA
+	//cudaGraphicsGLRegisterBuffer(&cudaVBO, bufferObject[VERTEX_BUFFER], cudaGraphicsMapFlagsNone);
+	//cudaGraphicsGLRegisterBuffer(&cudaVBO, bufferObject[INDEX_BUFFER], cudaGraphicsMapFlagsNone);
+//#endif
 }
 
 void Mesh::Draw()

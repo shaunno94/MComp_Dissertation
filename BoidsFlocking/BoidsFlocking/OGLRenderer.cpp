@@ -98,9 +98,12 @@ void OGLRenderer::init_glfw()
 
 void OGLRenderer::SetCurrentShader(Shader* s)
 {
-	currentShader = s;
-	glUseProgram(currentShader->GetShaderProgram());
-	UpdateShaderMatrices();
+	if (s != currentShader)
+	{
+		currentShader = s;
+		glUseProgram(currentShader->GetShaderProgram());
+		UpdateShaderMatrices();
+	}
 }
 
 void OGLRenderer::Render(float dt)
@@ -112,7 +115,8 @@ void OGLRenderer::Render(float dt)
 		currentScene->UpdateScene(dt);
 		currentScene->RenderScene();
 	}
-
+	glUseProgram(0);
+	currentShader = nullptr;
 	glfwSwapBuffers(window);
 }
 

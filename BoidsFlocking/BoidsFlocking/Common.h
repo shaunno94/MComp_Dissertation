@@ -17,6 +17,12 @@
 #include <device_functions.h>
 #endif
 
+#if CUDA
+#define NUM_BOIDS 4096
+#else
+#define NUM_BOIDS 5000
+#endif
+
 enum BUFFERS
 {
 	VERTEX_BUFFER, INDEX_BUFFER, MAX_BUFFER

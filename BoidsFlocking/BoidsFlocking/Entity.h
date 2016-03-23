@@ -15,15 +15,16 @@ public:
 	inline const std::string& GetName() { return m_Name; }
 	inline std::vector<Entity*>& GetChildren() { return m_Children; }
 
-	inline void SetWorldTransform(const glm::mat4& transform) { m_WorldTransform = transform; }
-	inline const glm::mat4& GetWorldTransform() const { return m_WorldTransform; }
+	inline void SetWorldTransform(const glm::mat4& transform) { m_WorldTransform = transform; m_WorldTransformPtr = &m_WorldTransform; }
+	inline void SetWorldTransform(glm::mat4* transform) { m_WorldTransformPtr = transform; }
+	inline const glm::mat4* GetWorldTransform() const { return m_WorldTransformPtr; }
 
 	inline void SetLocalTransform(const glm::mat4& transform) { m_LocalTransform = transform; }
 	inline const glm::mat4& GetLocalTransform() const { return m_LocalTransform; }
 
 	inline void SetRenderComponent(RenderComponent* comp) { m_RenderComponent = comp; m_RenderComponent->SetParent(this); }
 	inline RenderComponent* GetRenderComponent() const { return m_RenderComponent; }
-glm::mat4 m_WorldTransform;
+
 protected:
 	virtual void OnRenderObject();			//Handles OpenGL calls to Render the object
 	virtual void OnUpdateObject(float dt);	//Override to handle things like AI etc on update loop
@@ -34,7 +35,8 @@ protected:
 
 	RenderComponent* m_RenderComponent;
 
-	
+	glm::mat4 m_WorldTransform;
+	glm::mat4* m_WorldTransformPtr;
 	glm::mat4 m_LocalTransform;
 
 	float m_CamDist; //For ordering of rendering lists.
