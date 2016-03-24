@@ -158,7 +158,7 @@
     <CudaCompile>
       <CodeGeneration>compute_35,sm_35</CodeGeneration>
       <TargetMachinePlatform>64</TargetMachinePlatform>
-      <MaxRegCount>255</MaxRegCount>
+      <MaxRegCount>0</MaxRegCount>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>

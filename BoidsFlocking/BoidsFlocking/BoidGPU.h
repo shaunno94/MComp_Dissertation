@@ -1,6 +1,13 @@
 #pragma once
 #include "Common.h"
 #if CUDA
+struct BoidGPU;
+struct Neighbour
+{
+	unsigned int n;
+	float distance = 0.0f;
+};
+
 struct BoidGPU
 {	
 	glm::vec3 m_Position;
@@ -9,20 +16,23 @@ struct BoidGPU
 	glm::vec3 m_CohesiveVector;
 	glm::vec3 m_SeperationVector;
 	glm::vec3 m_AlignmentVector;
-	//glm::mat4 m_WorldTransform;
-	BoidGPU** neighbours;
+	glm::quat m_Rotation;
+	//BoidGPU** neighbours;
+	Neighbour* neighbours;
 	unsigned int lastIndex;
+
+	__device__ BoidGPU(){}
 
 	BoidGPU(unsigned int maxNeighbours, glm::vec3 spawnPos, glm::vec3 initialVelocity)
 	{
 		m_CohesiveVector = glm::vec3(0, 0, 0);
 		m_AlignmentVector = glm::vec3(0, 0, 0);
 		m_SeperationVector = glm::vec3(0, 0, 0);
+		m_Rotation = glm::quat(0, 0, 0, 0);
 		m_Position = spawnPos;
 		m_Velocity = initialVelocity;
 		m_OldPosition = spawnPos;
-		//m_WorldTransform = glm::mat4(1.0f);
-		cudaMalloc((void**)&neighbours, sizeof(int64_t) * maxNeighbours);
+		cudaMalloc((void**)&neighbours, sizeof(Neighbour) * maxNeighbours);
 		lastIndex = 0;
 	}
 };

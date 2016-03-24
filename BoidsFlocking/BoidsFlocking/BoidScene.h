@@ -39,6 +39,7 @@ private:
 	BoidGPU* boids_dev;
 	glm::mat4* modelMatrices_hostPinned;
 	uint32_t BLOCKS_PER_GRID;
+	cudaStream_t streams[3];
 #endif
 #if THREADED
 	std::vector<std::future<void>> futures;
@@ -48,9 +49,9 @@ private:
 };	
 #if CUDA
 __global__ void ComputeKNN(BoidGPU* boid);
-//__global__ void CalcVelocity(BoidGPU* boid, const glm::vec3 heading);
 __global__ void CalcCohesion(BoidGPU* boid);
 __global__ void CalcSeperation(BoidGPU* boid);
 __global__ void CalcAlignment(BoidGPU* boid);
-__global__ void UpdateBoid(BoidGPU* boid, glm::mat4* boidMat, const float dt, const glm::vec3 heading);
+__global__ void CalcVelocity(BoidGPU* boid, const glm::vec3 heading);
+__global__ void UpdateBoid(BoidGPU* boid, glm::mat4* boidMat, const float dt);
 #endif

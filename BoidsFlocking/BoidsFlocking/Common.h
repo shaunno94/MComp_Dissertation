@@ -10,6 +10,7 @@
 
 #define CUDA 1
 #if CUDA
+//#define CUDA_API_PER_THREAD_DEFAULT_STREAM
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
@@ -29,6 +30,7 @@ enum BUFFERS
 };
 
 #define SHADER_DIR "..\\..\\Shaders\\"
+//#define SHADER_DIR "..\\..\\..\\Shaders\\"
 
 #define max(a,b)    (((a) > (b)) ? (a) : (b))
 #define min(a,b)    (((a) < (b)) ? (a) : (b))
