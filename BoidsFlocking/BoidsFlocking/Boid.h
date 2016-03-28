@@ -17,7 +17,7 @@ public:
 	virtual ~Boid();
 
 	inline const glm::vec3& GetPosition() const { return m_Position; }
-	inline void UpdateFlockHeading(glm::vec3& heading) { m_Destination = heading; }
+	static void UpdateFlockHeading(glm::vec3& heading) { m_Heading = heading; }
 	inline const glm::vec3& GetVelocity() const { return m_Velocity; }
 	inline void AddNeighbour(BoidNeighbour bN) { neighbours.push_back(bN); }
 
@@ -25,16 +25,10 @@ protected:
 	virtual void OnUpdateObject(float dt) override;
 
 private:
-	void CalculateForce();
-	void CalcCohesion();
-	void CalcSeperation();
-	void CalcAlignment();
+	void CalculateVelocity();
 	void LimitVelocity();
-	void TendToPlace();
 
-	glm::vec3 m_Destination;
-	glm::vec3 m_OldPosition;
-	glm::vec3 m_Heading;
+	glm::vec3 m_OldPosition;	
 	glm::vec3 m_Position;
 	glm::vec3 m_Velocity;
 	glm::vec3 m_CohesiveVector;
@@ -44,6 +38,7 @@ private:
 	std::vector<BoidNeighbour> neighbours;
 
 	static const float MAX_SPEED;
+	static glm::vec3 m_Heading;
 	
 	struct compare
 	{

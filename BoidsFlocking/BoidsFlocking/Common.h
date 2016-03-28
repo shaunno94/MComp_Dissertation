@@ -19,7 +19,7 @@
 #endif
 
 #if CUDA
-#define NUM_BOIDS 4096
+#define NUM_BOIDS 20000
 #else
 #define NUM_BOIDS 5000
 #endif

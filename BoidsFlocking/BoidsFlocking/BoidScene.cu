@@ -3,8 +3,8 @@
 #include <iostream>
 
 #if CUDA
-#define MAX_NEIGHBOURS 100
-#define THREADS_PER_BLOCK 512
+#define MAX_NEIGHBOURS 150
+#define THREADS_PER_BLOCK 256
 const uint32_t THREADS_K1 = 16;
 const uint32_t BLOCKS_K1 = (NUM_BOIDS + (THREADS_K1 - 1)) / THREADS_K1;
 const dim3 THREAD_DIM_K1 = dim3(THREADS_K1, THREADS_K1);
@@ -12,18 +12,15 @@ const dim3 BLOCK_DIM_K1 = dim3(BLOCKS_K1, BLOCKS_K1);
 #endif
 //k value
 #define MAX_DISTANCE 65.0f
+#define MAX_DISTANCE_SQR MAX_DISTANCE * MAX_DISTANCE
 BoidScene::BoidScene(unsigned int numberOfBoids, Shader* shader, Mesh* mesh)
 {
 	InitGenerator(numberOfBoids);
 #if CUDA
 	cudaSetDevice(0);
 	BLOCKS_PER_GRID = (numberOfBoids + (THREADS_PER_BLOCK - 1)) / THREADS_PER_BLOCK;
-	boids_host = (BoidGPU*)malloc(numberOfBoids * sizeof(BoidGPU));
-	cudaMallocHost((void**)&modelMatrices_hostPinned, numberOfBoids * sizeof(glm::mat4));
-	for (int i = 0; i < 3; ++i)
-	{
-		cudaStreamCreate(&streams[i]);
-	}
+	boidsHost = (BoidGPU*)malloc(numberOfBoids * sizeof(BoidGPU));
+	cudaMallocHost((void**)&modelMatricesHostPinned, numberOfBoids * sizeof(glm::mat4));
 #endif
 
 	glm::vec3 pos, vel;
@@ -36,18 +33,20 @@ BoidScene::BoidScene(unsigned int numberOfBoids, Shader* shader, Mesh* mesh)
 		b->SetRenderComponent(new RenderComponent(mesh, shader));
 
 #if CUDA
-		boids_host[i] = BoidGPU(150, pos, vel);
-		b->SetWorldTransform(&modelMatrices_hostPinned[i]);	
+		boidsHost[i] = BoidGPU(MAX_NEIGHBOURS, pos, vel);
+		b->SetWorldTransform(&modelMatricesHostPinned[i]);
 #endif
 		boids.push_back(b);
 	}
 	m_FlockHeading = glm::vec3(0, 0, 0);
 
 #if CUDA
-	cudaMalloc((void**)&boids_dev, numberOfBoids * sizeof(BoidGPU));
-	cudaMemcpy(boids_dev, boids_host, numberOfBoids * sizeof(BoidGPU), cudaMemcpyHostToDevice);
+	cudaMalloc((void**)&boidsDevice, numberOfBoids * sizeof(BoidGPU));
+	cudaMalloc((void**)&modelMatricesDevice, numberOfBoids * sizeof(glm::mat4));
+	cudaMemcpy(boidsDevice, boidsHost, numberOfBoids * sizeof(BoidGPU), cudaMemcpyHostToDevice);
 	//std::cout << cudaGetErrorString(cudaGetLastError()) << std::endl;
 #endif
+
 #if THREADED
 	futures.clear();
 #endif
@@ -57,10 +56,11 @@ BoidScene::~BoidScene()
 {
 #if CUDA
 	cudaDeviceSynchronize();
-	cudaFree(boids_dev);
+	cudaFree(boidsDevice);
+	cudaFree(modelMatricesDevice);
 	//cudaFree(modelMatrices_hostPinned);
 	cudaDeviceReset();
-	free(boids_host);
+	free(boidsHost);
 #endif
 	for (auto& b : boids)
 	{
@@ -93,7 +93,6 @@ void BoidScene::RenderScene()
 	Scene::RenderScene();
 	for (unsigned int i = 0; i < boids.size(); ++i)
 		boids[i]->OnRenderObject();
-
 }
 
 #if !CUDA
@@ -104,6 +103,7 @@ void BoidScene::UpdateScene(float dt)
 	if (count > 2500.0f)
 	{
 		m_FlockHeading = glm::vec3(rndX(), rndY(), rndZ());
+		Boid::UpdateFlockHeading(m_FlockHeading);
 		count = 0.0f;
 	}
 
@@ -137,14 +137,13 @@ void BoidScene::UpdatePartition(size_t begin, size_t end, float dt)
 			if (i != j)
 			{
 				posB = boids[j]->GetPosition();
-				float dist = glm::length(posA - posB);
+				float dist = glm::distance(posA, posB);
 				if (dist <= MAX_DISTANCE)
 				{
 					BoidNeighbour bNA;
 					bNA.n = boids[j];
 					bNA.dist = dist;
 					boids[i]->AddNeighbour(bNA);
-					boids[i]->UpdateFlockHeading(m_FlockHeading);
 				}
 			}
 		}
@@ -193,13 +192,14 @@ void BoidScene::UpdateScene(float dt)
 #else
 void BoidScene::UpdateScene(float dt)
 {
-	//ComputeKNN << <BLOCK_DIM_K1, THREAD_DIM_K1 >> >(boids_dev);
-	ComputeKNN << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boids_dev);
-	CalcCohesion << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boids_dev);
-	CalcAlignment << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boids_dev);
-	CalcSeperation << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boids_dev);
-	CalcVelocity << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boids_dev, m_FlockHeading);
-	UpdateBoid << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boids_dev, modelMatrices_hostPinned, dt);
+	//ComputeKNN << <BLOCK_DIM_K1, THREAD_DIM_K1 >> >(boidsDevice);
+	ComputeKNN << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boidsDevice);
+	CalcCohesion << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boidsDevice);
+	CalcAlignment << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boidsDevice);
+	CalcSeperation << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boidsDevice);
+	CalcVelocity << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boidsDevice, m_FlockHeading);
+	UpdateBoid << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boidsDevice, modelMatricesDevice, dt);
+	cudaMemcpyAsync(modelMatricesHostPinned, modelMatricesDevice, sizeof(glm::mat4) * NUM_BOIDS, cudaMemcpyDeviceToHost);
 	
 	count += dt;
 	if (count > 2500.0f)
@@ -220,18 +220,21 @@ __global__ void ComputeKNN(BoidGPU* boid)
 	glm::vec3 temp_pos = boid[tid].m_Position;
 	Neighbour* temp_neighbour = boid[tid].neighbours;
 	unsigned int counter = 0;
-	
+	float dist = 0.0f;
+	glm::vec3 dir = glm::vec3(0,0,0);
+
+#pragma unroll	
 	for (unsigned int i = 0; i < NUM_BOIDS; ++i)
 	{
-		float dist = glm::distance(temp_pos, boid[i].m_Position);
-		if (dist <= MAX_DISTANCE)
+		if (tid == i) continue;
+
+		dir = boid[i].m_Position - temp_pos;
+		dist = glm::dot(dir, dir);
+		if (dist <= MAX_DISTANCE_SQR)
 		{
-			if (tid != i)
-			{
-				temp_neighbour[counter].n = i;
-				temp_neighbour[counter++].distance = 1.0f / dist;
-				if (counter >= 150) break;
-			}
+			temp_neighbour[counter].n = i;
+			temp_neighbour[counter++].distance = 1.0f / sqrtf(dist);
+			if (counter >= MAX_NEIGHBOURS) break;
 		}
 	}	
 
@@ -284,12 +287,9 @@ __global__ void CalcCohesion(BoidGPU* boid)
 		temp_cohVec += boid[boid[tid].neighbours[i].n].m_Position;
 	}
 
-	temp_cohVec /= float(index - 1);
-	temp_cohVec -= boid[tid].m_Position;
-	glm::normalize(temp_cohVec);
+	temp_cohVec = glm::normalize((temp_cohVec / float(index - 1)) - boid[tid].m_Position);
 	temp_cohVec *= (0.3f * (glm::length(temp_cohVec) * 0.001f));
-	temp_cohVec -= boid[tid].m_Velocity;
-	boid[tid].m_CohesiveVector = temp_cohVec;
+	boid[tid].m_CohesiveVector = (temp_cohVec - boid[tid].m_Velocity);
 }
 
 __global__ void CalcSeperation(BoidGPU* boid)
@@ -310,9 +310,7 @@ __global__ void CalcSeperation(BoidGPU* boid)
 		//temp_sepVec -= dir / sqrt(glm::dot(dir, dir));
 	}
 
-	temp_sepVec /= float(index - 1);
-	temp_sepVec *= 0.25f;
-	boid[tid].m_SeperationVector = temp_sepVec;
+	boid[tid].m_SeperationVector = (temp_sepVec / float(index - 1)) * 0.25f;
 }
 
 __global__ void CalcAlignment(BoidGPU* boid)
@@ -329,9 +327,7 @@ __global__ void CalcAlignment(BoidGPU* boid)
 		temp_alignVec += boid[boid[tid].neighbours[i].n].m_Velocity;
 	}
 	
-	temp_alignVec /= float(index - 1);
-	temp_alignVec -= boid[tid].m_Velocity;
-	boid[tid].m_AlignmentVector = temp_alignVec;
+	boid[tid].m_AlignmentVector = ((temp_alignVec / float(index - 1)) - boid[tid].m_Velocity);
 }
 
 __global__ void CalcVelocity(BoidGPU* boid, const glm::vec3 heading)
@@ -341,15 +337,14 @@ __global__ void CalcVelocity(BoidGPU* boid, const glm::vec3 heading)
 		return;
 
 	glm::vec3 velocity = boid[tid].m_CohesiveVector + boid[tid].m_SeperationVector + boid[tid].m_AlignmentVector + ((heading - boid[tid].m_Position) * 0.001f);
-	float speed = sqrt(glm::dot(velocity, velocity));
-
+	float speed = sqrtf(glm::dot(velocity, velocity));
+	
 	if (speed > 0.3f)
 	{
-		velocity = (velocity / speed) /* 0.3f*/;
+		velocity = (velocity / speed) * 0.3f;
 	}
-	velocity *= 0.999f;
-	boid[tid].m_Velocity = velocity;
-	glm::normalize(velocity);
+	boid[tid].m_Velocity = velocity * 0.999f;
+	velocity = glm::normalize(velocity);
 	boid[tid].m_Rotation = glm::quat(glm::vec3(velocity.x, velocity.y, velocity.z));
 }
 
