@@ -159,6 +159,7 @@
       <CodeGeneration>compute_35,sm_35</CodeGeneration>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <MaxRegCount>0</MaxRegCount>
+      <FastMath>true</FastMath>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>

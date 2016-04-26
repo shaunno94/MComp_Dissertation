@@ -17,11 +17,8 @@ struct BoidGPU
 	glm::vec3 m_SeperationVector;
 	glm::vec3 m_AlignmentVector;
 	glm::quat m_Rotation;
-	//BoidGPU** neighbours;
 	Neighbour* neighbours;
 	unsigned int lastIndex;
-
-	__device__ BoidGPU(){}
 
 	BoidGPU(unsigned int maxNeighbours, glm::vec3 spawnPos, glm::vec3 initialVelocity)
 	{

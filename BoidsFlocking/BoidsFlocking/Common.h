@@ -10,7 +10,6 @@
 
 #define CUDA 1
 #if CUDA
-//#define CUDA_API_PER_THREAD_DEFAULT_STREAM
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
@@ -19,7 +18,7 @@
 #endif
 
 #if CUDA
-#define NUM_BOIDS 20000
+#define NUM_BOIDS 36864
 #else
 #define NUM_BOIDS 5000
 #endif
