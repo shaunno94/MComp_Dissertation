@@ -45,9 +45,6 @@
     <ClCompile Include="Boid.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BoidGeneratorGPU.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OGLRenderer.h">
@@ -84,9 +81,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BoidGPU.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BoidGeneratorGPU.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
