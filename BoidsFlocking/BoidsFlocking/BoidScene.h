@@ -35,11 +35,13 @@ private:
 	glm::vec3 m_FlockHeading;
 
 #if CUDA
-	BoidGPU* boidsHost;
 	BoidGPU* boidsDevice;
 	glm::mat4* modelMatricesHostPinned;
 	glm::mat4* modelMatricesDevice;
 	uint32_t BLOCKS_PER_GRID;
+
+	glm::vec3* m_Position;
+	glm::vec3* m_Velocity;
 #endif
 #if THREADED
 	std::vector<std::future<void>> futures;

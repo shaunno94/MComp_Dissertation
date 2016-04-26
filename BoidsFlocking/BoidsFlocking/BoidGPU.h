@@ -2,7 +2,7 @@
 #include "Common.h"
 #if CUDA
 
-struct BoidGPU
+/*struct BoidGPU
 {	
 	glm::vec3 m_Position;
 	glm::vec3 m_Velocity;
@@ -20,5 +20,15 @@ struct BoidGPU
 		m_Position = spawnPos;
 		m_Velocity = initialVelocity;
 	}
+};*/
+
+struct BoidGPU
+{
+	glm::vec3 m_Position[NUM_BOIDS];
+	glm::vec3 m_Velocity[NUM_BOIDS];
+	glm::vec3 m_CohesiveVector[NUM_BOIDS];
+	glm::vec3 m_SeperationVector[NUM_BOIDS];
+	glm::vec3 m_AlignmentVector[NUM_BOIDS];
+	glm::quat m_Rotation[NUM_BOIDS];
 };
 #endif

@@ -160,6 +160,7 @@
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <MaxRegCount>0</MaxRegCount>
       <FastMath>true</FastMath>
+      <GenerateLineInfo>true</GenerateLineInfo>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
