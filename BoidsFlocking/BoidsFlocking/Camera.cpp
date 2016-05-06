@@ -87,8 +87,8 @@ void Camera::pollMouse(float dt)
 	{
 		yaw -= 360.0;
 	}
-	pitch = min(pitch, 90.0f);
-	pitch = max(pitch, -90.0f);
+	pitch = minimum(pitch, 90.0f);
+	pitch = maximum(pitch, -90.0f);
 }
 
 Camera::~Camera(){}

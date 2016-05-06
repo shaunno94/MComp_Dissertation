@@ -42,6 +42,8 @@ private:
 
 	glm::vec3* m_Position;
 	glm::vec3* m_Velocity;
+	thrust::device_ptr<unsigned int> dev_key_ptr;
+	thrust::device_ptr<unsigned int> dev_val_ptr;
 #endif
 #if THREADED
 	std::vector<std::future<void>> futures;
@@ -50,7 +52,7 @@ private:
 #endif
 };	
 #if CUDA
-__global__ void ComputeKNN(BoidGPU* boid);
-__global__ void CalcVelocity(BoidGPU* boid, const glm::vec3 heading);
-__global__ void UpdateBoid(BoidGPU* boid, glm::mat4* boidMat, const float dt);
+__global__ void ComputeKNN(BoidGPU* boids);
+__global__ void ComputeRules(BoidGPU* boids);
+__global__ void UpdateBoid(BoidGPU* boids, glm::mat4* boidMat, const glm::vec3 heading, const float dt);
 #endif
