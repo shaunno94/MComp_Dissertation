@@ -51,10 +51,10 @@ void Entity::AddChildObject(Entity* child)
 	child->m_Parent = this;
 }
 
-void Entity::OnRenderObject()
+void Entity::OnRenderObject(unsigned int id)
 {
 	if (m_RenderComponent)
-		m_RenderComponent->Draw();
+		m_RenderComponent->Draw(id);
 }
 
 void Entity::OnUpdateObject(float dt)

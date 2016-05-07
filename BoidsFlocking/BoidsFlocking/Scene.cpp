@@ -61,8 +61,8 @@ void Scene::UpdateScene(float dt)
 void Scene::RenderScene()
 {
 	for (unsigned int i = 0; i < opaqueObjects.size(); ++i)
-		opaqueObjects[i]->OnRenderObject();
+		opaqueObjects[i]->OnRenderObject(i);
 
 	for (unsigned int i = 0; i < transparentObjects.size(); ++i)
-		transparentObjects[i]->OnRenderObject();
+		transparentObjects[i]->OnRenderObject(i);
 }

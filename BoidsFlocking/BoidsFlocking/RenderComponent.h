@@ -10,7 +10,7 @@ public:
 	RenderComponent(Mesh* mesh, Shader* shader);
 	~RenderComponent();
 
-	void Draw();
+	void Draw(unsigned int id);
 	void SetParent(Entity* e);
 
 private:

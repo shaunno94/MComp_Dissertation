@@ -36,7 +36,6 @@ private:
 
 #if CUDA
 	BoidGPU* boidsDevice;
-	glm::mat4* modelMatricesHostPinned;
 	glm::mat4* modelMatricesDevice;
 	uint32_t BLOCKS_PER_GRID;
 

@@ -24,10 +24,11 @@ int main(void)
 		glfwPollEvents();
 		gt.stopTimer();
 	} 
-
-	OGLRenderer::Release();
+	
 	delete triMesh;
 	delete simpleShader;	
 	delete boidScene;
+	OGLRenderer::Release();
+
 	return 0;
 }

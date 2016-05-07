@@ -20,6 +20,7 @@ public:
 	GLFWwindow* GetWindow() const { return window; }
 	unsigned int GetWindowWidth() const { return WIDTH; }
 	unsigned int GetWindowHeight() const { return HEIGHT; }
+	unsigned int GetUBO_ID() const { return UBO; }
 
 private:
 	OGLRenderer();
@@ -35,6 +36,8 @@ private:
 	Scene* currentScene;
 
 	static OGLRenderer* instance;
+
+	unsigned int UBO;
 
 	const unsigned int WIDTH = 1280;
 	const unsigned int HEIGHT = 720;

@@ -29,6 +29,12 @@ OGLRenderer::OGLRenderer()
 	init_glew();
 	currentScene = nullptr;
 	currentShader = nullptr;
+	
+	glGenBuffers(1, &UBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, UBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * NUM_BOIDS, 0, GL_DYNAMIC_COPY);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, UBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);	
 }
 
 OGLRenderer::~OGLRenderer()
@@ -37,6 +43,8 @@ OGLRenderer::~OGLRenderer()
 	{
 		glfwDestroyWindow(window);
 	}
+
+	glDeleteBuffers(1, &UBO);
 }
 
 void OGLRenderer::init_glew()
