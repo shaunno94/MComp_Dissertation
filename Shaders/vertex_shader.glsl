@@ -1,6 +1,7 @@
-#version 430
-
-layout(std430, binding=6) buffer MatrixData
+#version 450
+#extension GL_ARB_shader_draw_parameters : enable
+//gl_DrawIDARB
+layout(std430, binding=6) buffer ModelMatrixSSBO
 {
 	mat4 mMatrix[];
 };

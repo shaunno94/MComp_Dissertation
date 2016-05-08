@@ -12,7 +12,7 @@ public:
 	~Camera();
 	//Setup MVP matrix
 	void UpdateCamera(float dt);
-	inline const glm::mat4& GetVP() const { return VP; }
+	inline const glm::mat4* GetVP() const { return &VP; }
 
 private:
 	void pollMouse(float dt);

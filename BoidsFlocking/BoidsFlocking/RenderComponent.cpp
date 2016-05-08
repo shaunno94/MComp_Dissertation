@@ -26,9 +26,9 @@ void RenderComponent::Draw(unsigned int id)
 	OGLRenderer::Instance()->SetCurrentShader(m_Shader);
 #if !CUDA
 	glUniformMatrix4fv(m_Shader->GetModelMatrixLoc(), 1, GL_FALSE, (float*)m_Entity->GetWorldTransform());
-	glUniform1i(glGetUniformLocation(m_Shader->GetShaderProgram(), "ID"), -1);
+	glUniform1i(m_Shader->GetIDLoc(), -1);
 #else
-	glUniform1i(glGetUniformLocation(m_Shader->GetShaderProgram(), "ID"), id);
+	glUniform1i(m_Shader->GetIDLoc(), id);
 #endif
 	m_Mesh->Draw();
 }

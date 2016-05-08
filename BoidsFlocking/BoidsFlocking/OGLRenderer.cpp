@@ -30,10 +30,10 @@ OGLRenderer::OGLRenderer()
 	currentScene = nullptr;
 	currentShader = nullptr;
 	
-	glGenBuffers(1, &UBO);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, UBO);
+	glGenBuffers(1, &SSBO);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * NUM_BOIDS, 0, GL_DYNAMIC_COPY);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, UBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, SSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);	
 }
 
@@ -44,7 +44,7 @@ OGLRenderer::~OGLRenderer()
 		glfwDestroyWindow(window);
 	}
 
-	glDeleteBuffers(1, &UBO);
+	glDeleteBuffers(1, &SSBO);
 }
 
 void OGLRenderer::init_glew()
@@ -83,9 +83,9 @@ void OGLRenderer::init_glfw()
 	//Set window variables
 	MODE = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
-	glfwWindowHint(GLFW_SAMPLES, 8); // 8x antialiasing
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); //OpenGL 4.2
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+	glfwWindowHint(GLFW_SAMPLES, 0); // no AA
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); //OpenGL 4.5
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
 	glfwWindowHint(GLFW_DEPTH_BITS, 32);
 
@@ -110,7 +110,7 @@ void OGLRenderer::SetCurrentShader(Shader* s)
 	{
 		currentShader = s;
 		glUseProgram(currentShader->GetShaderProgram());
-		UpdateShaderMatrices();
+		glUniformMatrix4fv(currentShader->GetVPMatrixLoc(), 1, GL_FALSE, (float*)currentScene->GetCamera()->GetVP());
 	}
 }
 
@@ -123,7 +123,6 @@ void OGLRenderer::Render(float dt)
 		currentScene->UpdateScene(dt);
 		currentScene->RenderScene();
 	}
-	glUseProgram(0);
 	currentShader = nullptr;
 	glfwSwapBuffers(window);
 }
@@ -131,9 +130,4 @@ void OGLRenderer::Render(float dt)
 bool OGLRenderer::ShouldClose()
 {
 	return (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) && (glfwWindowShouldClose(window) == 0);
-}
-
-void OGLRenderer::UpdateShaderMatrices()
-{
-	glUniformMatrix4fv(currentShader->GetVPMatrixLoc(), 1, GL_FALSE, glm::value_ptr(currentScene->GetCamera()->GetVP()));
 }

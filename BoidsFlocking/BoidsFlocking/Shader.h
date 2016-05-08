@@ -15,6 +15,7 @@ public:
 	inline GLuint GetShaderProgram() const { return shaderProgram; }
 	inline GLuint GetModelMatrixLoc() const { return modelMatrixLoc; }
 	inline GLuint GetVPMatrixLoc() const { return VPMatrixLoc; }
+	inline GLuint GetIDLoc() const { return IDLoc; }
 
 private:
 	void init_shader();
@@ -25,6 +26,7 @@ private:
 	GLuint shaderProgram;
 	GLuint modelMatrixLoc;
 	GLuint VPMatrixLoc;
+	GLuint IDLoc;
 
 	std::string VERTEX_SHADER_BUFFER;
 	std::string FRAG_SHADER_BUFFER;

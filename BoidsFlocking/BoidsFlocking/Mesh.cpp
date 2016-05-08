@@ -385,7 +385,6 @@ void Mesh::Draw()
 	{
 		glDrawArrays(m_PrimitiveType, 0, m_NumVertices);
 	}
-	glBindVertexArray(0);
 
 	for (auto child : m_Children)
 		child->Draw();

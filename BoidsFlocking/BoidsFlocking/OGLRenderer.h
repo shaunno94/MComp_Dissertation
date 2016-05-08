@@ -16,11 +16,10 @@ public:
 	bool ShouldClose();
 	void SetCurrentShader(Shader* s);
 	void SetCurrentScene(Scene* s) { currentScene = s; }
-	void UpdateShaderMatrices();
 	GLFWwindow* GetWindow() const { return window; }
 	unsigned int GetWindowWidth() const { return WIDTH; }
 	unsigned int GetWindowHeight() const { return HEIGHT; }
-	unsigned int GetUBO_ID() const { return UBO; }
+	unsigned int GetUBO_ID() const { return SSBO; }
 
 private:
 	OGLRenderer();
@@ -37,9 +36,9 @@ private:
 
 	static OGLRenderer* instance;
 
-	unsigned int UBO;
+	unsigned int SSBO;
 
-	const unsigned int WIDTH = 1280;
-	const unsigned int HEIGHT = 720;
-	const char* TITLE = "MComp Dissertation";
+	const unsigned int WIDTH = 1600;
+	const unsigned int HEIGHT = 900;
+	const char* TITLE = "MComp Dissertation - Boids Simulation";
 };

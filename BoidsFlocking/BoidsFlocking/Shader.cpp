@@ -136,6 +136,7 @@ void Shader::SetDefaultAttributes()
 {
 	modelMatrixLoc = glGetUniformLocation(shaderProgram, "modelMatrix");
 	VPMatrixLoc = glGetUniformLocation(shaderProgram, "VPMatrix");
+	IDLoc = glGetUniformLocation(shaderProgram, "ID");
 	glBindAttribLocation(shaderProgram, VERTEX_BUFFER, "position");
 	//glBindAttribLocation(shaderProgram, COLOUR_BUFFER, "colour");
 	//glBindAttribLocation(shaderProgram, NORMAL_BUFFER, "normal");
