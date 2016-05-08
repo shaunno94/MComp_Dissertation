@@ -41,6 +41,7 @@ Mesh::Mesh(uint32_t numVertices, glm::vec3* vertices, glm::vec2* texCoords, glm:
 Mesh::~Mesh(void)
 {
 	Clean();
+	glDeleteBuffers(MAX_BUFFER, bufferObject);
 }
 
 void Mesh::Clean()
@@ -104,7 +105,7 @@ Mesh* Mesh::GenerateSphere(uint32_t height, uint32_t width)
 	return mesh;
 }
 
-Mesh* Mesh::GenerateTriangle() 
+Mesh* Mesh::GenerateTriangle(bool multiDraw)
 {
 	Mesh* mesh = new Mesh();
 
@@ -132,7 +133,7 @@ Mesh* Mesh::GenerateTriangle()
 		mesh->m_Indices[i] = i;
 	}
 
-	mesh->BufferData();
+	mesh->BufferData(multiDraw);
 	return mesh;
 }
 
@@ -312,7 +313,7 @@ glm::vec3 Mesh::GenerateTangent(const glm::vec3& a, const glm::vec3& b, const gl
 	return axis * factor;
 }
 
-void Mesh::BufferData()
+void Mesh::BufferData(bool multiDraw)
 {
 	glGenVertexArrays(1, &arrayObject);
 
@@ -366,6 +367,22 @@ void Mesh::BufferData()
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_NumIndices * sizeof(unsigned int), m_Indices, GL_STATIC_DRAW);
 	}
 
+	if (multiDraw)
+	{
+		for (unsigned int i = 0; i < NUM_BOIDS; ++i)
+		{
+			multiDrawArray[i].vertexCount = m_NumVertices;
+			multiDrawArray[i].instanceCount = 1;
+			multiDrawArray[i].firstIndex = 0;
+			multiDrawArray[i].baseVertex = 0;
+			multiDrawArray[i].baseInstance = i;
+		}
+		glGenBuffers(1, &bufferObject[INDIRECT_BUFFER]);
+		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, bufferObject[INDIRECT_BUFFER]);
+		glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(multiDrawArray), multiDrawArray, GL_STATIC_DRAW);
+		//std::cout << glewGetErrorString(glGetError()) << std::endl;
+	}
+
 	Clean();
 
 	for (auto& child : m_Children)
@@ -377,13 +394,20 @@ void Mesh::BufferData()
 void Mesh::Draw()
 {
 	glBindVertexArray(arrayObject);
-	if (bufferObject[INDEX_BUFFER])
+	if (bufferObject[INDIRECT_BUFFER])
 	{
-		glDrawElements(m_PrimitiveType, m_NumIndices, GL_UNSIGNED_INT, 0);
+		glMultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, 0, NUM_BOIDS, 0);
 	}
 	else
 	{
-		glDrawArrays(m_PrimitiveType, 0, m_NumVertices);
+		if (bufferObject[INDEX_BUFFER])
+		{
+			glDrawElements(m_PrimitiveType, m_NumIndices, GL_UNSIGNED_INT, 0);
+		}
+		else
+		{
+			glDrawArrays(m_PrimitiveType, 0, m_NumVertices);
+		}
 	}
 
 	for (auto child : m_Children)

@@ -18,6 +18,8 @@
 #include <thrust/device_vector.h>
 #include <thrust/sort.h>
 
+//1105920
+//221184
 #define NUM_BOIDS 221184
 #define THREADS_PER_BLOCK 256
 #else
@@ -26,7 +28,7 @@
 
 enum BUFFERS
 {
-	VERTEX_BUFFER, INDEX_BUFFER, MAX_BUFFER
+	VERTEX_BUFFER, INDEX_BUFFER, INDIRECT_BUFFER, MAX_BUFFER
 };
 
 #define SHADER_DIR "..\\..\\Shaders\\"

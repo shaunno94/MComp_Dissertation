@@ -94,11 +94,13 @@ void BoidScene::InitGenerator(int spread)
 
 void BoidScene::RenderScene()
 {
-	//Scene::RenderScene(); 
+	Scene::RenderScene(); 
+#if CUDA
+	boids[0]->OnRenderObject();
+#else
 	for (unsigned int i = 0; i < boids.size(); ++i)
-		boids[i]->OnRenderObject(i);
-	
-	//glMultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, nullptr, NUM_BOIDS, 0);
+		boids[i]->OnRenderObject();
+#endif
 }
 
 #if !CUDA
@@ -360,7 +362,7 @@ __global__ void UpdateBoid(BoidGPU* boids, glm::mat4* boidMat, const glm::vec3 h
 	unsigned int tid = threadIdx.x + (blockIdx.x * blockDim.x);
 
 	glm::vec3 velocity = boids->m_Velocity[tid];
-	velocity += (boids->m_CohesiveVector[tid] + boids->m_SeperationVector[tid] + boids->m_AlignmentVector[tid] + ((heading - boids->m_Position[tid]) * 0.5f)) * __frcp_rn(dt);
+	velocity += (boids->m_CohesiveVector[tid] + boids->m_SeperationVector[tid] + boids->m_AlignmentVector[tid] + ((heading - boids->m_Position[tid]) * 0.2f)) * __frcp_rn(dt);
 	
 	//(((velocity.x * velocity.x) + (velocity.y * velocity.y) + (velocity.z * velocity.z)));
 	float speed = __fadd_rn(__fadd_rn(__fmul_rn(velocity.x, velocity.x), __fmul_rn(velocity.y, velocity.y)), __fmul_rn(velocity.z, velocity.z));

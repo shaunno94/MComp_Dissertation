@@ -147,9 +147,10 @@
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <StringPooling>true</StringPooling>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>..\..\libraries\glfw64\lib-vc2013;..\..\libraries\glew-1.13.0\lib\Release\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -161,6 +162,7 @@
       <MaxRegCount>0</MaxRegCount>
       <FastMath>true</FastMath>
       <GenerateLineInfo>false</GenerateLineInfo>
+      <Optimization>O3</Optimization>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -191,6 +193,11 @@
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="BoidScene.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Shaders\frag_shader.glsl" />
+    <None Include="..\..\Shaders\vertex_shader.glsl" />
+    <None Include="..\..\Shaders\vertex_shader_multiDraw.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

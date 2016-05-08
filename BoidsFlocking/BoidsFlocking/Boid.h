@@ -25,10 +25,9 @@ protected:
 	virtual void OnUpdateObject(float dt) override;
 
 private:
-	void CalculateVelocity();
+	void CalculateVelocity(float dt);
 	void LimitVelocity();
 
-	glm::vec3 m_OldPosition;	
 	glm::vec3 m_Position;
 	glm::vec3 m_Velocity;
 	glm::vec3 m_CohesiveVector;

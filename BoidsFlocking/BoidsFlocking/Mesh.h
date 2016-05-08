@@ -1,6 +1,15 @@
 #pragma once
 #include "Common.h"
 
+struct DrawElementsCommand
+{
+	unsigned int vertexCount;
+	unsigned int instanceCount;
+	unsigned int firstIndex;
+	unsigned int baseVertex;
+	unsigned int baseInstance;
+};
+
 class Mesh
 {
 public:
@@ -14,7 +23,7 @@ public:
 	inline const std::vector<Mesh*>& GetChildren() { return m_Children; }
 
 	//Generates a single triangle, with RGB colours
-	static Mesh* GenerateTriangle();
+	static Mesh* GenerateTriangle(bool multiDraw = false);
 	static Mesh* GenerateSphere(uint32_t height, uint32_t width);
 	//Generates a single white quad, going from -1 to 1 on the x and z axis.
 	static Mesh* GenerateQuad(glm::vec2 texCoords = glm::vec2(1.0f, 1.0f));
@@ -36,7 +45,7 @@ public:
 
 protected:	
 	//Buffers all VBO data into graphics memory. Required before drawing!
-	void BufferData();
+	void BufferData(bool multiDraw = false);
 	//Helper function for GenerateTangents
 	glm::vec3 GenerateTangent(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c, const glm::vec2& ta, const glm::vec2& tb, const glm::vec2& tc);
 	void Clean();
@@ -63,7 +72,5 @@ protected:
 	//VBOs for this mesh
 	unsigned int bufferObject[MAX_BUFFER];
 
-#if CUDA
-	cudaGraphicsResource* cudaVBO;
-#endif
+	DrawElementsCommand multiDrawArray[NUM_BOIDS];
 };

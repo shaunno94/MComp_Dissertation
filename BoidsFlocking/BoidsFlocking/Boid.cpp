@@ -1,7 +1,7 @@
 #include "Boid.h"
 #include <algorithm> 
 
-const float Boid::MAX_SPEED = 0.3f;
+const float Boid::MAX_SPEED = 12.0f;
 glm::vec3 Boid::m_Heading = glm::vec3(0, 0, 0);
 
 Boid::Boid(glm::vec3 spawnPosition, glm::vec3 initialVelocity, const std::string& name) : Entity(name)
@@ -19,12 +19,11 @@ Boid::~Boid()
 
 void Boid::OnUpdateObject(float dt)
 {
-	CalculateVelocity();
+	CalculateVelocity(dt);
 
-	m_OldPosition = m_Position;
-	m_Position += (m_Velocity * dt);
+	m_Position += (m_Velocity * (1.0f / dt));
 	
-	m_WorldTransform = glm::mat4_cast(glm::quat(glm::vec3(m_Velocity.x, m_Velocity.y, m_Velocity.z))) * glm::translate(glm::mat4(1.0f), m_OldPosition + m_Position);
+	m_WorldTransform = glm::mat4_cast(glm::quat(m_Velocity)) * glm::translate(m_Position);
 	m_WorldTransform = m_WorldTransform * m_LocalTransform;
 	neighbours.clear();
 }
@@ -39,7 +38,7 @@ void Boid::LimitVelocity()
 	m_Velocity *= m_DampingFactor;
 }
 
-void Boid::CalculateVelocity()
+void Boid::CalculateVelocity(float dt)
 {
 	glm::vec3 avgPos = glm::vec3(0, 0, 0);
 	glm::vec3 seperation = glm::vec3(0, 0, 0);
@@ -71,8 +70,8 @@ void Boid::CalculateVelocity()
 	m_AlignmentVector = (avgVel - m_Velocity);
 
 	//Calculate final velocity
-	m_Velocity = m_SeperationVector + m_CohesiveVector + m_AlignmentVector + 
-		((m_Heading - m_Position) * 0.001f);
+	m_Velocity += (m_SeperationVector + m_CohesiveVector + m_AlignmentVector + 
+		((m_Heading - m_Position) * 0.5f)) * (1.0f / dt);
 
 	LimitVelocity();
 }

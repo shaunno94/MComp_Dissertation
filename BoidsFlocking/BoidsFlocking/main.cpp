@@ -9,8 +9,13 @@
 int main(void)
 {
 	OGLRenderer* renderer = OGLRenderer::Instance();
+#if !CUDA
 	Shader* simpleShader = new Shader(SHADER_DIR"vertex_shader.glsl", SHADER_DIR"frag_shader.glsl");
-	Mesh* triMesh = Mesh::GenerateTriangle();
+	Mesh* triMesh = Mesh::GenerateTriangle(false);
+#else
+	Shader* simpleShader = new Shader(SHADER_DIR"vertex_shader_multiDraw.glsl", SHADER_DIR"frag_shader.glsl");
+	Mesh* triMesh = Mesh::GenerateTriangle(true);
+#endif
 	BoidScene* boidScene = new BoidScene(NUM_BOIDS, simpleShader, triMesh);
 	Timer gt;
 
