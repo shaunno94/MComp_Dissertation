@@ -21,19 +21,30 @@ int main(void)
 
 	renderer->SetCurrentScene(boidScene);
 
+	float frameCount = 0.0f;
+	float avgTotalComputeTime = 0.0f;
 	//Main loop.
 	while (renderer->ShouldClose()) //Check if the ESC key was pressed or the window was closed
 	{
+		frameCount += 1.0f;
 		gt.startTimer();		
 		renderer->Render(gt.getLast());
 		glfwPollEvents();
 		gt.stopTimer();
+		avgTotalComputeTime += gt.getLast();
 	} 
 	
+#if CUDA
+	float avgCudaComputeTime = boidScene->GetCUDAElapsedTime() / frameCount;
+	std::cout << "CUDA Kernel Average Compute Time: " << avgCudaComputeTime << "ms" << std::endl;
+#endif
+	avgTotalComputeTime /= frameCount;
+	std::cout << "System Average Compute Time: " << avgTotalComputeTime << "ms" << std::endl;
+
 	delete triMesh;
 	delete simpleShader;	
 	delete boidScene;
 	OGLRenderer::Release();
-
+	system("pause");
 	return 0;
 }

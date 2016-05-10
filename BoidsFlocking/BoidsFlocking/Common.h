@@ -17,9 +17,10 @@
 #include <device_functions.h>
 #include <thrust/device_vector.h>
 #include <thrust/sort.h>
-
+#define KERNEL 2 //0 == slow, 1 == medium, 2 == fast
 //1105920
 //221184
+//36864
 #define NUM_BOIDS 221184
 #define THREADS_PER_BLOCK 256
 #else

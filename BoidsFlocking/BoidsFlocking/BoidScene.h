@@ -19,7 +19,9 @@ public:
 	Boid* GetBoid(unsigned int i) { return i < boids.size() ? boids[i] : nullptr; }
 	std::vector<Boid*>& GetBoidData() { return boids; }
 
-protected:
+#if CUDA
+	float GetCUDAElapsedTime() const { return elapsed_cuda; }
+#endif
 
 private:
 	BoidScene() {}
@@ -43,6 +45,8 @@ private:
 	glm::vec3* m_Velocity;
 	thrust::device_ptr<unsigned int> dev_key_ptr;
 	thrust::device_ptr<unsigned int> dev_val_ptr;
+	cudaEvent_t start, stop;
+	float elapsed_cuda = 0.0f;
 #endif
 #if THREADED
 	std::vector<std::future<void>> futures;
