@@ -35,6 +35,7 @@ private:
 
 	float count = 0.0f;
 	glm::vec3 m_FlockHeading;
+	unsigned int numBoids;
 
 #if CUDA
 	BoidGPU* boidsDevice;
@@ -43,7 +44,7 @@ private:
 
 	glm::vec3* m_Position;
 	glm::vec3* m_Velocity;
-	thrust::device_ptr<unsigned int> dev_key_ptr;
+	thrust::device_ptr<int> dev_key_ptr;
 	thrust::device_ptr<unsigned int> dev_val_ptr;
 	cudaEvent_t start, stop;
 	float elapsed_cuda = 0.0f;
@@ -55,7 +56,7 @@ private:
 #endif
 };	
 #if CUDA
-__global__ void ComputeKNN(BoidGPU* boids);
+__global__ void ComputeKNN(BoidGPU* boids, unsigned int numBoids);
 __global__ void ComputeRules(BoidGPU* boids);
 __global__ void UpdateBoid(BoidGPU* boids, glm::mat4* boidMat, const glm::vec3 heading, const float dt);
 #endif

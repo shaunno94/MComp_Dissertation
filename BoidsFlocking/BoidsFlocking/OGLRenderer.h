@@ -2,6 +2,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "Timer.h"
 
 class Scene;
 class Shader;
@@ -12,14 +13,15 @@ public:
 	static OGLRenderer* Instance();
 	static void Release();
 
-	void Render(float dt);
+	void Render(Timer* t);
 	bool ShouldClose();
 	void SetCurrentShader(Shader* s);
 	void SetCurrentScene(Scene* s) { currentScene = s; }
 	GLFWwindow* GetWindow() const { return window; }
 	unsigned int GetWindowWidth() const { return WIDTH; }
 	unsigned int GetWindowHeight() const { return HEIGHT; }
-	unsigned int GetUBO_ID() const { return SSBO; }
+	unsigned int GetSSBO_ID() const { return SSBO; }
+	float GetElapsed() const { return elapsedCPU; }
 
 private:
 	OGLRenderer();
@@ -35,6 +37,7 @@ private:
 	Scene* currentScene;
 
 	static OGLRenderer* instance;
+	float elapsedCPU = 0.0f;
 
 	unsigned int SSBO;
 

@@ -114,13 +114,14 @@ void OGLRenderer::SetCurrentShader(Shader* s)
 	}
 }
 
-void OGLRenderer::Render(float dt)
+void OGLRenderer::Render(Timer* gt)
 {
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 	if (currentScene)
 	{
-		currentScene->UpdateScene(dt);
+		currentScene->UpdateScene(gt->getLast());
+		elapsedCPU += gt->split();
 		currentScene->RenderScene();
 	}
 	currentShader = nullptr;

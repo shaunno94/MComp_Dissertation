@@ -26,7 +26,6 @@ protected:
 
 private:
 	void CalculateVelocity(float dt);
-	void LimitVelocity();
 
 	glm::vec3 m_Position;
 	glm::vec3 m_Velocity;
@@ -37,6 +36,7 @@ private:
 	std::vector<BoidNeighbour> neighbours;
 
 	static const float MAX_SPEED;
+	static const float MAX_SPEED_SQR;
 	static glm::vec3 m_Heading;
 	
 	struct compare

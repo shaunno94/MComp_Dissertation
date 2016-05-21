@@ -1,7 +1,9 @@
 #include "Boid.h"
 #include <algorithm> 
+#define K 450
 
 const float Boid::MAX_SPEED = 12.0f;
+const float Boid::MAX_SPEED_SQR = MAX_SPEED * MAX_SPEED;
 glm::vec3 Boid::m_Heading = glm::vec3(0, 0, 0);
 
 Boid::Boid(glm::vec3 spawnPosition, glm::vec3 initialVelocity, const std::string& name) : Entity(name)
@@ -19,6 +21,10 @@ Boid::~Boid()
 
 void Boid::OnUpdateObject(float dt)
 {
+	std::partial_sort(neighbours.begin(), neighbours.begin() + K, neighbours.end(), comp);
+	//std::sort_heap(neighbours.begin(), neighbours.end(), comp);
+	//std::sort(neighbours.begin(), neighbours.end(), comp);
+	
 	CalculateVelocity(dt);
 
 	m_Position += (m_Velocity * (1.0f / dt));
@@ -28,32 +34,23 @@ void Boid::OnUpdateObject(float dt)
 	neighbours.clear();
 }
 
-void Boid::LimitVelocity()
-{
-	float speed = glm::length(m_Velocity);
-	if (speed > MAX_SPEED)
-	{
-		m_Velocity = (m_Velocity / speed) * MAX_SPEED;
-	}
-	m_Velocity *= m_DampingFactor;
-}
-
 void Boid::CalculateVelocity(float dt)
 {
 	glm::vec3 avgPos = glm::vec3(0, 0, 0);
 	glm::vec3 seperation = glm::vec3(0, 0, 0);
 	glm::vec3 avgVel = glm::vec3(0, 0, 0);
+	float avgDiv = 1.0f / float(K);
 
 	//Loop through neighbours
-	for (unsigned int i = 0; i < neighbours.size(); ++i)
+	for (unsigned int i = 0; i < K; ++i)
 	{
 		avgPos += neighbours[i].n->m_Position;
-		seperation -= (neighbours[i].n->m_Position - m_Position) / neighbours[i].dist;
+		seperation -= (neighbours[i].n->m_Position - m_Position) * (1.0f / sqrtf(neighbours[i].dist));
 		avgVel += neighbours[i].n->m_Velocity;
 	}
 
 	//Calculate Cohesion
-	avgPos /= float(neighbours.size());
+	avgPos *= avgDiv;
 	m_CohesiveVector = (avgPos - m_Position);
 
 	float mag = glm::length(m_CohesiveVector);
@@ -62,16 +59,21 @@ void Boid::CalculateVelocity(float dt)
 	m_CohesiveVector -= m_Velocity;
 
 	//Calculate Seperation
-	seperation /= float(neighbours.size());
+	seperation *= avgDiv;
 	m_SeperationVector *= 0.25f;
 
 	//Calculate Alignment
-	avgVel /= float(neighbours.size());
+	avgVel *= avgDiv;
 	m_AlignmentVector = (avgVel - m_Velocity);
 
 	//Calculate final velocity
 	m_Velocity += (m_SeperationVector + m_CohesiveVector + m_AlignmentVector + 
-		((m_Heading - m_Position) * 0.5f)) * (1.0f / dt);
+		(glm::cross(m_Heading, m_Position) * 0.05f)) * (1.0f / dt);
 
-	LimitVelocity();
+	float speed = glm::dot(m_Velocity, m_Velocity);
+	if (speed > MAX_SPEED_SQR)
+	{
+		m_Velocity = (m_Velocity * (1.0f / sqrtf(speed))) * MAX_SPEED;
+	}
+	m_Velocity *= m_DampingFactor;
 }
