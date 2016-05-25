@@ -4,6 +4,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 OGLRenderer* OGLRenderer::instance = nullptr;
+unsigned int OGLRenderer::num_boids = 0;
 
 OGLRenderer* OGLRenderer::Instance()
 {
@@ -32,7 +33,7 @@ OGLRenderer::OGLRenderer()
 	
 	glGenBuffers(1, &SSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, SSBO);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * NUM_BOIDS, 0, GL_DYNAMIC_COPY);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * num_boids, 0, GL_DYNAMIC_COPY);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, SSBO);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);	
 }

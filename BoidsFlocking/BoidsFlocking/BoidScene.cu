@@ -1,3 +1,4 @@
+//Author: Shaun Heald
 #include "BoidScene.h"
 #include "Common.h"
 #include <iostream>
@@ -19,9 +20,10 @@ BoidScene::BoidScene(unsigned int numberOfBoids, Shader* shader, Mesh* mesh)
 {
 	numBoids = numberOfBoids;
 #if CUDA
-	numBoids = ceilf(float(numBoids) / THREADS_PER_BLOCK) * THREADS_PER_BLOCK;
 	cudaSetDevice(0);
+	//Enable OpenGL interop
 	cudaGraphicsGLRegisterBuffer(&modelMatricesCUDA, OGLRenderer::Instance()->GetSSBO_ID(), cudaGraphicsMapFlagsWriteDiscard);
+	//Ensure one thread per Boid
 	BLOCKS_PER_GRID = (numBoids + (THREADS_PER_BLOCK - 1)) / THREADS_PER_BLOCK;
 	m_Position = (glm::vec3*)malloc(numBoids * sizeof(glm::vec3));
 	m_Velocity = (glm::vec3*)malloc(numBoids * sizeof(glm::vec3));
@@ -47,14 +49,17 @@ BoidScene::BoidScene(unsigned int numberOfBoids, Shader* shader, Mesh* mesh)
 	m_FlockHeading = glm::vec3(0, 0, 0);
 
 #if CUDA
+	//Allocate device memory
 	cudaMalloc((void**)&boidsDevice, sizeof(BoidGPU));
+	//Copy data to device
 	cudaMemcpy(boidsDevice->m_Position, m_Position, numBoids * sizeof(glm::vec3), cudaMemcpyHostToDevice);
 	cudaMemcpy(boidsDevice->m_Velocity, m_Velocity, numBoids * sizeof(glm::vec3), cudaMemcpyHostToDevice);
+	//This is only used for GPU #3 implementation - gets device pointer
 	dev_key_ptr = thrust::device_pointer_cast(boidsDevice->m_Key);
 	dev_val_ptr = thrust::device_pointer_cast(boidsDevice->m_Val);	
+	//Debug timing stuff
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
-	//std::cout << cudaGetErrorString(cudaGetLastError()) << std::endl;
 #endif
 
 #if THREADED
@@ -64,6 +69,7 @@ BoidScene::BoidScene(unsigned int numberOfBoids, Shader* shader, Mesh* mesh)
 
 BoidScene::~BoidScene()
 {
+	//Cleanup memory
 #if CUDA
 	cudaDeviceSynchronize();
 	cudaFree(boidsDevice);
@@ -79,7 +85,7 @@ BoidScene::~BoidScene()
 	}
 	boids.clear();
 }
-
+//Randomly generates points to place Boids.
 void BoidScene::InitGenerator(int spread)
 {
 	std::random_device rD0;
@@ -120,7 +126,7 @@ void BoidScene::UpdateScene(float dt)
 		Boid::UpdateFlockHeading(m_FlockHeading);
 		count = 0.0f;
 	}
-
+	//Split data over 8 threads
 	size_t distribution = boids.size() / NUMBER_OF_THREADS;
 	futures.push_back(std::async(std::launch::async, &BoidScene::UpdatePartition, this, 0, distribution, dt));
 	futures.push_back(std::async(std::launch::async, &BoidScene::UpdatePartition, this, distribution + 1, 2 * distribution, dt));
@@ -139,7 +145,7 @@ void BoidScene::UpdateScene(float dt)
 
 	Scene::UpdateScene(dt);
 }
-
+//Each thread runs this function and works on a subset of data
 void BoidScene::UpdatePartition(size_t begin, size_t end, float dt)
 {
 	glm::vec3 posA, posB;
@@ -154,19 +160,17 @@ void BoidScene::UpdatePartition(size_t begin, size_t end, float dt)
 				posB = boids[j]->GetPosition();
 				dir = posB - posA;
 				float dist = glm::dot(dir, dir);
-				//if (dist <= MAX_DISTANCE_SQR)
-				{
-					BoidNeighbour bNA;
-					bNA.n = boids[j];
-					bNA.dist = dist ;
-					boids[i]->AddNeighbour(bNA);
-				}
+				BoidNeighbour bNA;
+				bNA.n = boids[j];
+				bNA.dist = dist ;
+				boids[i]->AddNeighbour(bNA);
 			}
 		}
 		boids[i]->OnUpdateObject(dt);
 	}
 }
 #else
+//Single threaded version.
 void BoidScene::UpdateScene(float dt)
 {
 	count += dt;
@@ -188,20 +192,16 @@ void BoidScene::UpdateScene(float dt)
 			{
 				dir = posB - posA;
 				distance = glm::dot(dir, dir);
-				//if (distance <= MAX_DISTANCE_SQR)
-				{
-					//distance = sqrtf(distance);
-					posB = boids[j]->GetPosition();
-					BoidNeighbour bNA;
-					bNA.n = boids[j];
-					bNA.dist = distance;
-					boids[i]->AddNeighbour(bNA);
+				posB = boids[j]->GetPosition();
+				BoidNeighbour bNA;
+				bNA.n = boids[j];
+				bNA.dist = distance;
+				boids[i]->AddNeighbour(bNA);
 
-					BoidNeighbour bNB;
-					bNB.n = boids[i];
-					bNB.dist = distance;
-					boids[j]->AddNeighbour(bNB);
-				}
+				BoidNeighbour bNB;
+				bNB.n = boids[i];
+				bNB.dist = distance;
+				boids[j]->AddNeighbour(bNB);
 			}
 		}
 	}
@@ -217,19 +217,22 @@ void BoidScene::UpdateScene(float dt)
 {
 	float temp = 0.0f;
 	cudaEventRecord(start, 0);
-
+	//Map ogl buffer for use with CUDA
 	cudaGraphicsMapResources(1, &modelMatricesCUDA, 0);
+	//Compute the nearest neighbours
 	ComputeKNN << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boidsDevice, numBoids);
 	
 #if KERNEL == 2
+	//Parallel radix sort
 	thrust::sort_by_key(dev_key_ptr, dev_key_ptr + numBoids, dev_val_ptr);
 	ComputeRules << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boidsDevice);
 #endif
-	
+	//Get ogl buffer pointer
 	cudaGraphicsResourceGetMappedPointer((void**)&modelMatricesDevice, nullptr, modelMatricesCUDA);
 	UpdateBoid << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(boidsDevice, modelMatricesDevice, m_FlockHeading, dt);
+	//Release ogl buffer 
 	cudaGraphicsUnmapResources(1, &modelMatricesCUDA, 0);
-
+	//Debug timing stuff
 	cudaEventRecord(stop, 0);
 	cudaEventSynchronize(stop);
 	cudaEventElapsedTime(&temp, start, stop);
@@ -378,7 +381,7 @@ __global__ void ComputeRules(BoidGPU* boids)
 	boids->m_AlignmentVector[sortedID] = ((temp_alignVec) - myVel) * 0.8f;
 }
 #endif
-
+//Update velocity and position and calculate model matrix then store it to ogl shared buffer
 __global__ void UpdateBoid(BoidGPU* boids, glm::mat4* boidMat, const glm::vec3 heading, const float dt)
 {
 	unsigned int tid = threadIdx.x + (blockIdx.x * blockDim.x);

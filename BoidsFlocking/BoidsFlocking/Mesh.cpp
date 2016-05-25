@@ -105,7 +105,7 @@ Mesh* Mesh::GenerateSphere(uint32_t height, uint32_t width)
 	return mesh;
 }
 
-Mesh* Mesh::GenerateTriangle(bool multiDraw)
+Mesh* Mesh::GenerateTriangle(bool multiDraw, unsigned int num_elements)
 {
 	Mesh* mesh = new Mesh();
 
@@ -132,7 +132,7 @@ Mesh* Mesh::GenerateTriangle(bool multiDraw)
 		mesh->m_Tangents[i] = glm::vec3(1, 0, 0);
 		mesh->m_Indices[i] = i;
 	}
-
+	mesh->numElements = num_elements;
 	mesh->BufferData(multiDraw);
 	return mesh;
 }
@@ -232,7 +232,6 @@ void Mesh::GenerateNormals()
 	}
 	else
 	{
-		//It's just a list of triangles, so generate face normals
 		for (unsigned int i = 0; i < m_NumVertices; i += 3)
 		{
 			glm::vec3& a = m_Vertices[i];
@@ -253,8 +252,6 @@ void Mesh::GenerateNormals()
 
 void Mesh::GenerateTangents()
 {
-	//Extra! stops rare occurrence of this function being called
-	//on a mesh without tex coords, which would break quite badly!
 	if (!m_TextureCoords)
 		return;
 
@@ -369,7 +366,8 @@ void Mesh::BufferData(bool multiDraw)
 
 	if (multiDraw)
 	{
-		for (unsigned int i = 0; i < NUM_BOIDS; ++i)
+		multiDrawArray = new DrawElementsCommand[numElements];
+		for (unsigned int i = 0; i < numElements; ++i)
 		{
 			multiDrawArray[i].vertexCount = m_NumVertices;
 			multiDrawArray[i].instanceCount = 1;
@@ -379,8 +377,7 @@ void Mesh::BufferData(bool multiDraw)
 		}
 		glGenBuffers(1, &bufferObject[INDIRECT_BUFFER]);
 		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, bufferObject[INDIRECT_BUFFER]);
-		glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(multiDrawArray), multiDrawArray, GL_STATIC_DRAW);
-		//std::cout << glewGetErrorString(glGetError()) << std::endl;
+		glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(DrawElementsCommand) * numElements, multiDrawArray, GL_STATIC_DRAW);
 	}
 
 	Clean();
@@ -396,7 +393,8 @@ void Mesh::Draw()
 	glBindVertexArray(arrayObject);
 	if (bufferObject[INDIRECT_BUFFER])
 	{
-		glMultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, 0, NUM_BOIDS, 0);
+		//Batch draw all elements - this function produces a single draw call
+		glMultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, 0, numElements, 0);
 	}
 	else
 	{

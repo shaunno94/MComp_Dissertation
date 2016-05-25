@@ -11,6 +11,7 @@ class OGLRenderer
 {
 public:
 	static OGLRenderer* Instance();
+	static unsigned int num_boids;
 	static void Release();
 
 	void Render(Timer* t);

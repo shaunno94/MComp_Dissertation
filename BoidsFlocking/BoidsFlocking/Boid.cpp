@@ -22,8 +22,6 @@ Boid::~Boid()
 void Boid::OnUpdateObject(float dt)
 {
 	std::partial_sort(neighbours.begin(), neighbours.begin() + K, neighbours.end(), comp);
-	//std::sort_heap(neighbours.begin(), neighbours.end(), comp);
-	//std::sort(neighbours.begin(), neighbours.end(), comp);
 	
 	CalculateVelocity(dt);
 

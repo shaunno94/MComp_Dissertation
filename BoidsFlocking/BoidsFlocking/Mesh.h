@@ -23,7 +23,7 @@ public:
 	inline const std::vector<Mesh*>& GetChildren() { return m_Children; }
 
 	//Generates a single triangle, with RGB colours
-	static Mesh* GenerateTriangle(bool multiDraw = false);
+	static Mesh* GenerateTriangle(bool multiDraw = false, unsigned int num_elements = 0);
 	static Mesh* GenerateSphere(uint32_t height, uint32_t width);
 	//Generates a single white quad, going from -1 to 1 on the x and z axis.
 	static Mesh* GenerateQuad(glm::vec2 texCoords = glm::vec2(1.0f, 1.0f));
@@ -72,5 +72,8 @@ protected:
 	//VBOs for this mesh
 	unsigned int bufferObject[MAX_BUFFER];
 
-	DrawElementsCommand multiDrawArray[NUM_BOIDS];
+	unsigned int numElements = 0;
+
+	//DrawElementsCommand multiDrawArray[NUM_BOIDS];
+	DrawElementsCommand* multiDrawArray = nullptr;
 };
