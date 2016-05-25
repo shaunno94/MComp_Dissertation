@@ -42,6 +42,11 @@ Mesh::~Mesh(void)
 {
 	Clean();
 	glDeleteBuffers(MAX_BUFFER, bufferObject);
+	if (multiDrawArray)
+	{
+		delete multiDrawArray;
+		multiDrawArray = nullptr;
+	}
 }
 
 void Mesh::Clean()

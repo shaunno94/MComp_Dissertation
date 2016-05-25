@@ -4,7 +4,8 @@
 #include "Common.h"
 #include "Shader.h"
 #include "Mesh.h"
-
+//Use win32 & Release when compiling for CPU.
+//Use x64 & Release when compiling for the GPU.
 int main(void)
 {		
 	int numBoids;
