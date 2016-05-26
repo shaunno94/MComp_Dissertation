@@ -42,8 +42,6 @@ private:
 	glm::mat4* modelMatricesDevice;
 	uint32_t BLOCKS_PER_GRID;
 
-	glm::vec3* m_Position;
-	glm::vec3* m_Velocity;
 	thrust::device_ptr<int> dev_key_ptr;
 	thrust::device_ptr<unsigned int> dev_val_ptr;
 	cudaEvent_t start, stop;

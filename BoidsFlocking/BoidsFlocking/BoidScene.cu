@@ -25,8 +25,21 @@ BoidScene::BoidScene(unsigned int numberOfBoids, Shader* shader, Mesh* mesh)
 	cudaGraphicsGLRegisterBuffer(&modelMatricesCUDA, OGLRenderer::Instance()->GetSSBO_ID(), cudaGraphicsMapFlagsWriteDiscard);
 	//Ensure one thread per Boid
 	BLOCKS_PER_GRID = (numBoids + (THREADS_PER_BLOCK - 1)) / THREADS_PER_BLOCK;
-	m_Position = (glm::vec3*)malloc(numBoids * sizeof(glm::vec3));
-	m_Velocity = (glm::vec3*)malloc(numBoids * sizeof(glm::vec3));
+	//Allocate device memory, using unified memory to de-reference pointer from host side
+	cudaMallocManaged((void**)&boidsDevice, sizeof(BoidGPU));
+	cudaMallocManaged((void**)&boidsDevice->m_Position, sizeof(glm::vec3) * numBoids);
+	cudaMallocManaged((void**)&boidsDevice->m_Velocity, sizeof(glm::vec3) * numBoids);
+	cudaMallocManaged((void**)&boidsDevice->m_AlignmentVector, sizeof(glm::vec3) * numBoids);
+	cudaMallocManaged((void**)&boidsDevice->m_SeperationVector, sizeof(glm::vec3) * numBoids);
+	cudaMallocManaged((void**)&boidsDevice->m_CohesiveVector, sizeof(glm::vec3) * numBoids);
+	cudaMallocManaged((void**)&boidsDevice->m_Key, sizeof(int) * numBoids);
+	cudaMallocManaged((void**)&boidsDevice->m_Val, sizeof(unsigned int) * numBoids);	
+	//This is only used for GPU #3 implementation - gets device pointer
+	dev_key_ptr = thrust::device_pointer_cast(boidsDevice->m_Key);
+	dev_val_ptr = thrust::device_pointer_cast(boidsDevice->m_Val);	
+	//Debug timing stuff
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
 #endif
 
 	InitGenerator(numBoids);
@@ -41,27 +54,13 @@ BoidScene::BoidScene(unsigned int numberOfBoids, Shader* shader, Mesh* mesh)
 		b->SetRenderComponent(new RenderComponent(mesh, shader));
 
 #if CUDA
-		m_Position[i] = pos;
-		m_Velocity[i] = vel;
+		//Copy data to device - unified memory so this is ok
+		boidsDevice->m_Position[i] = pos;
+		boidsDevice->m_Velocity[i] = vel;
 #endif
 		boids.push_back(b);
 	}
 	m_FlockHeading = glm::vec3(0, 0, 0);
-
-#if CUDA
-	//Allocate device memory
-	cudaMalloc((void**)&boidsDevice, sizeof(BoidGPU));
-	//Copy data to device
-	cudaMemcpy(boidsDevice->m_Position, m_Position, numBoids * sizeof(glm::vec3), cudaMemcpyHostToDevice);
-	cudaMemcpy(boidsDevice->m_Velocity, m_Velocity, numBoids * sizeof(glm::vec3), cudaMemcpyHostToDevice);
-	//This is only used for GPU #3 implementation - gets device pointer
-	dev_key_ptr = thrust::device_pointer_cast(boidsDevice->m_Key);
-	dev_val_ptr = thrust::device_pointer_cast(boidsDevice->m_Val);	
-	//Debug timing stuff
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-#endif
-
 #if THREADED
 	futures.clear();
 #endif
@@ -72,11 +71,16 @@ BoidScene::~BoidScene()
 	//Cleanup memory
 #if CUDA
 	cudaDeviceSynchronize();
+	cudaFree(boidsDevice->m_AlignmentVector);
+	cudaFree(boidsDevice->m_CohesiveVector);
+	cudaFree(boidsDevice->m_Key);
+	cudaFree(boidsDevice->m_Position);
+	cudaFree(boidsDevice->m_SeperationVector);
+	cudaFree(boidsDevice->m_Val);
+	cudaFree(boidsDevice->m_Velocity);
 	cudaFree(boidsDevice);
 	cudaGraphicsUnregisterResource(modelMatricesCUDA);
 	cudaDeviceReset();
-	free(m_Position);
-	free(m_Velocity);
 #endif
 	for (auto& b : boids)
 	{
